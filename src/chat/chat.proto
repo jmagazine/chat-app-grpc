@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package chat;
+
+option go_package = "github.com/chat-app-grpc;chat_app_grpc";
+
+service ChatService{
+  rpc CreateNewUser(CreateUserMessage) returns (User);
+  rpc DeleteUser(DeleteUserMessage) returns (User);
+  rpc UpdateUser(UpdateUserMessage) returns (User);
+
+}
+
+message User {
+  uint32 id=1;
+  string fullName=2;
+  string username=3;
+  string password=4;
+}
+
+message CreateUserMessage {
+  string fullName=1;
+  string username=2;
+  string password=3;
+}
+
+message DeleteUserMessage{
+  uint32 id = 1;
+}
+
+message UpdateUserMessage {
+  map<string, string> updatedFields=1;
+}
+
