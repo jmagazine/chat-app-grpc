@@ -5,30 +5,45 @@ package chat;
 option go_package = "github.com/chat-app-grpc;chat_app_grpc";
 
 service ChatService{
-  rpc CreateNewUser(CreateUserMessage) returns (User);
-  rpc DeleteUser(DeleteUserMessage) returns (User);
-  rpc UpdateUser(UpdateUserMessage) returns (User);
+  rpc CreateNewUser(CreateUserParams) returns (User){}
+  rpc DeleteUserById(DeleteUserByIdParams) returns (DidDeleteUserMessage){}
+  rpc UpdateUser(UpdateUserParams) returns (User){}
+  rpc GetUsers(GetUsersParams) returns (UsersList){}
 
 }
 
+
 message User {
-  uint32 id=1;
+  bytes id=1;
   string fullName=2;
   string username=3;
   string password=4;
 }
 
-message CreateUserMessage {
+message CreateUserParams {
   string fullName=1;
   string username=2;
   string password=3;
 }
 
-message DeleteUserMessage{
-  uint32 id = 1;
+message DeleteUserByIdParams{
+  bytes id = 1;
 }
 
-message UpdateUserMessage {
-  map<string, string> updatedFields=1;
+message UpdateUserParams {
+  bytes id=1;
+  map<string, string> updatedFields=2;
 }
 
+message GetUsersParams{
+}
+
+message UsersList {
+  repeated User users=1;
+}
+
+message DidDeleteUserMessage {
+  bytes id = 1;
+  bool success = 2;
+  optional string error = 3;
+}
