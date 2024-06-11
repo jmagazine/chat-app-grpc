@@ -4,11 +4,18 @@ package chat;
 
 option go_package = "github.com/chat-app-grpc;chat_app_grpc";
 
+import "google/protobuf/timestamp.proto";
+
 service ChatService{
   rpc CreateNewUser(CreateUserParams) returns (User){}
   rpc DeleteUserById(DeleteUserByIdParams) returns (DidDeleteUserMessage){}
   rpc UpdateUser(UpdateUserParams) returns (User){}
   rpc GetUsers(GetUsersParams) returns (UsersList){}
+
+  rpc GetChatMessages(GetChatMessagesParams) returns (ChatMessageList){}
+  rpc SendChatMessage(SendChatMessageParams) returns (ChatMessage){}
+
+  rpc DropDatabase(DropDatabaseParams) returns (DropDatabaseMessage){}
 
 }
 
@@ -46,4 +53,30 @@ message DidDeleteUserMessage {
   bytes id = 1;
   bool success = 2;
   optional string error = 3;
+}
+
+message GetChatMessagesParams {
+  bytes sender_id = 1;
+}
+
+message SendChatMessageParams {
+ ChatMessage message = 1;
+}
+
+message ChatMessage {
+  google.protobuf.Timestamp timestamp = 1;
+  bytes sender_id = 2;
+  bytes recipient_id = 3;
+}
+
+message ChatMessageList {
+  repeated ChatMessage messages = 1;
+}
+
+message DropDatabaseParams {
+  string dbname=1;
+}
+
+message DropDatabaseMessage{
+  bool success=1;
 }

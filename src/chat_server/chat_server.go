@@ -3,55 +3,90 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	pb "github.com/jmagazine/chat-app-grpc/src/chat"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
 	"log"
 	"net"
 	"os"
 	"strings"
-
-	_ "github.com/lib/pq"
 )
 
-const (
-	address = "localhost:50051"
-)
+var address string
 
 type ChatServer struct {
+	test bool
 	conn *pgx.Conn
 	pb.UnimplementedChatServiceServer
 }
 
-func NewChatServer() *ChatServer {
-	return &ChatServer{}
+func NewChatServer(test bool) *ChatServer {
+	address = os.Getenv("ADDRESS")
+	return &ChatServer{test: test}
 }
 
+// USER FUNCTIONS
+
+// CreateNewUser defines the protocol to create a new user
 func (server *ChatServer) CreateNewUser(ctx context.Context, in *pb.CreateUserParams) (*pb.User, error) {
-	// Protocol to Create new user and update user list
 	log.Printf("Received: %v", in.GetFullName())
-	createSql := `
+	createUsersDb := `
+CREATE DATABASE users_%sdb);`
+
+	createUsersTbl := `
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    fullname TEXT,
-    username TEXT,
-    password TEXT
+    fullname VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password varchar(255) NOT NULL
 );`
 
-	_, err := server.conn.Exec(context.Background(), createSql)
+	createUUIDExtension := `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+`
+
+	// Create database if it is not present
+	_, err := server.conn.Exec(context.Background(), createUsersDb)
+	if err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			if pgErr.Code == "42P04" { // 42P04: database already exists
+				fmt.Println("Database already exists, skipping creation.")
+			}
+		} else {
+			// Other errors
+			fmt.Printf("Failed to create user db: %v\n", err)
+			return nil, err
+		}
+	}
+	// Create table if it is not present
+	_, err = server.conn.Exec(context.Background(), createUsersTbl)
 	if err != nil {
 		fmt.Printf("Failed to create user table: %v\n", err)
-		os.Exit(1)
+		return nil, err
+	}
+
+	// Create uuid extension if it is not present
+	_, err = server.conn.Exec(context.Background(), createUUIDExtension)
+	if err != nil {
+		fmt.Printf("Failed to create uuid-usop extension: %v\n", err)
+		return nil, err
 	}
 	var new_user = &pb.User{FullName: in.GetFullName(), Username: in.GetUsername(), Password: in.GetPassword()}
 	tx, err := server.conn.Begin(context.Background())
 	if err != nil {
 		log.Fatalf("conn.Begin failed: %v", err)
+		return nil, err
 	}
-	_, err = tx.Exec(context.Background(), "insert into users(fullname, username, password) values ($1, $2, $3)", new_user.FullName, new_user.Username, new_user.Password)
+	// update database
+	_, err = tx.Exec(context.Background(),
+		"insert into users(fullname, username, password) values ($1, $2, $3)",
+		new_user.FullName, new_user.Username, new_user.Password)
 	if err != nil {
-		log.Fatalf("tx.Exec failed: %v", err)
+		tx.Rollback(context.Background())
+		log.Printf("tx.Exec failed: %v", err)
+		return nil, err
 	}
 
 	tx.Commit(context.Background())
@@ -59,6 +94,7 @@ CREATE TABLE IF NOT EXISTS users (
 	return new_user, nil
 }
 
+// Run starts the server.
 func (server *ChatServer) Run() error {
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
@@ -75,6 +111,7 @@ func (server *ChatServer) Run() error {
 
 }
 
+// DeleteUser deletes a user from the database if it exists.
 func (server *ChatServer) DeleteUser(ctx context.Context, in *pb.DeleteUserByIdParams) (*pb.DidDeleteUserMessage, error) {
 	// Get user to delete
 	rows, err := server.conn.Query(context.Background(), "delete from users where id = $1", in.Id)
@@ -87,8 +124,8 @@ func (server *ChatServer) DeleteUser(ctx context.Context, in *pb.DeleteUserByIdP
 
 }
 
-// Attempts to update the user's information, and returns the fields of user after the update. If the update fails,
-// it returns the user's fields unedited.
+// UpdateUser attempts to update the user's information, and returns the fields of user after the update.
+// If the update fails, it returns the user's fields unedited.
 func (server *ChatServer) UpdateUser(ctx context.Context, in *pb.UpdateUserParams) (*pb.User, error) {
 	var builder strings.Builder
 	builder.WriteString("UPDATE users SET ")
@@ -119,6 +156,7 @@ func (server *ChatServer) UpdateUser(ctx context.Context, in *pb.UpdateUserParam
 	return updatedUser, nil
 }
 
+// GetUsers returns a list of all registered users.
 func (server *ChatServer) GetUsers(ctx context.Context, in *pb.GetUsersParams) (*pb.UsersList, error) {
 
 	var users_list *pb.UsersList = &pb.UsersList{}
@@ -140,15 +178,55 @@ func (server *ChatServer) GetUsers(ctx context.Context, in *pb.GetUsersParams) (
 	return users_list, nil
 }
 
+// END OF USER FUNCTIONS
+
+// MESSAGE FUNCTIONS
+
+// SendChatMessage sends a chat message to the database.
+func (server *ChatServer) SendChatMessage(ctx context.Context, in *pb.SendChatMessageParams) (*pb.ChatMessage, error) {
+	createSql := `CREATE TABLE IF NOT EXISTS chat_messages (
+    timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
+    sender FOREIGN KEY REFERENCES users (id),
+    recipient FOREIGN KEY REFERENCES users (id),
+);`
+	// create db if it doesn't exist
+	_, err := server.conn.Exec(context.Background(), createSql)
+	if err != nil {
+		log.Printf("conn.Begin failed: %v", err)
+	}
+
+	tx, err := server.conn.Begin(context.Background())
+
+	newChatMessage := in.Message
+	_, err = tx.Exec(context.Background(),
+		"insert into chat_messages(timestamp, sender_id, recipient_id) values ($1, $2, $3)",
+		newChatMessage.Timestamp, newChatMessage.SenderId, newChatMessage.RecipientId)
+	if err != nil {
+		tx.Rollback(context.Background())
+		log.Printf("tx.Exec failed: %v", err)
+		return nil, err
+	}
+
+	tx.Commit(context.Background())
+	return newChatMessage, nil
+
+}
+
+func (server *ChatServer) DropDatabase(ctx context.Context, in *pb.DropDatabaseParams) (*pb.DropDatabaseMessage, error) {
+	if _, err := server.conn.Exec(context.Background(), fmt.Sprintf("drop database %s", in.Dbname)); err != nil {
+		log.Printf("conn.Exec failed: %v", err)
+		return &pb.DropDatabaseMessage{Success: false}, err
+	}
+	return &pb.DropDatabaseMessage{Success: true}, nil
+}
+
 func main() {
 	// Instantiate database
-	if err := godotenv.Load("C:\\Users\\joshm\\GolandProjects\\chat-app-grpc\\src\\.env"); err != nil {
+	if err := godotenv.Load("src/.env.prod"); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 
 	}
-	var password = os.Getenv("DB_PASSWORD")
-
-	dbUrl := fmt.Sprintf("postgres://postgres:%s@localhost:5432/postgres", password)
+	var dbUrl = os.Getenv("DB_URL")
 
 	conn, err := pgx.Connect(context.Background(), dbUrl)
 	if err != nil {
@@ -157,7 +235,7 @@ func main() {
 	defer conn.Close(context.Background())
 
 	// Instantiate new ChatServer
-	var chatServer *ChatServer = NewChatServer()
+	var chatServer = NewChatServer(false)
 	chatServer.conn = conn
 	if err := chatServer.Run(); err != nil {
 		log.Fatalf("Failed to serve: %v", err)

@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.4.0
 // - protoc             v5.27.1
-// source: chat/chat.proto
+// source: src/chat/chat.proto
 
 package chat_app_grpc
 
@@ -19,10 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	ChatService_CreateNewUser_FullMethodName  = "/chat.ChatService/CreateNewUser"
-	ChatService_DeleteUserById_FullMethodName = "/chat.ChatService/DeleteUserById"
-	ChatService_UpdateUser_FullMethodName     = "/chat.ChatService/UpdateUser"
-	ChatService_GetUsers_FullMethodName       = "/chat.ChatService/GetUsers"
+	ChatService_CreateNewUser_FullMethodName   = "/chat.ChatService/CreateNewUser"
+	ChatService_DeleteUserById_FullMethodName  = "/chat.ChatService/DeleteUserById"
+	ChatService_UpdateUser_FullMethodName      = "/chat.ChatService/UpdateUser"
+	ChatService_GetUsers_FullMethodName        = "/chat.ChatService/GetUsers"
+	ChatService_GetChatMessages_FullMethodName = "/chat.ChatService/GetChatMessages"
+	ChatService_SendChatMessage_FullMethodName = "/chat.ChatService/SendChatMessage"
+	ChatService_DropDatabase_FullMethodName    = "/chat.ChatService/DropDatabase"
 )
 
 // ChatServiceClient is the client API for ChatService service.
@@ -33,6 +36,9 @@ type ChatServiceClient interface {
 	DeleteUserById(ctx context.Context, in *DeleteUserByIdParams, opts ...grpc.CallOption) (*DidDeleteUserMessage, error)
 	UpdateUser(ctx context.Context, in *UpdateUserParams, opts ...grpc.CallOption) (*User, error)
 	GetUsers(ctx context.Context, in *GetUsersParams, opts ...grpc.CallOption) (*UsersList, error)
+	GetChatMessages(ctx context.Context, in *GetChatMessagesParams, opts ...grpc.CallOption) (*ChatMessageList, error)
+	SendChatMessage(ctx context.Context, in *SendChatMessageParams, opts ...grpc.CallOption) (*ChatMessage, error)
+	DropDatabase(ctx context.Context, in *DropDatabaseParams, opts ...grpc.CallOption) (*DropDatabaseMessage, error)
 }
 
 type chatServiceClient struct {
@@ -83,6 +89,36 @@ func (c *chatServiceClient) GetUsers(ctx context.Context, in *GetUsersParams, op
 	return out, nil
 }
 
+func (c *chatServiceClient) GetChatMessages(ctx context.Context, in *GetChatMessagesParams, opts ...grpc.CallOption) (*ChatMessageList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ChatMessageList)
+	err := c.cc.Invoke(ctx, ChatService_GetChatMessages_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatServiceClient) SendChatMessage(ctx context.Context, in *SendChatMessageParams, opts ...grpc.CallOption) (*ChatMessage, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ChatMessage)
+	err := c.cc.Invoke(ctx, ChatService_SendChatMessage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatServiceClient) DropDatabase(ctx context.Context, in *DropDatabaseParams, opts ...grpc.CallOption) (*DropDatabaseMessage, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DropDatabaseMessage)
+	err := c.cc.Invoke(ctx, ChatService_DropDatabase_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ChatServiceServer is the server API for ChatService service.
 // All implementations must embed UnimplementedChatServiceServer
 // for forward compatibility
@@ -91,6 +127,9 @@ type ChatServiceServer interface {
 	DeleteUserById(context.Context, *DeleteUserByIdParams) (*DidDeleteUserMessage, error)
 	UpdateUser(context.Context, *UpdateUserParams) (*User, error)
 	GetUsers(context.Context, *GetUsersParams) (*UsersList, error)
+	GetChatMessages(context.Context, *GetChatMessagesParams) (*ChatMessageList, error)
+	SendChatMessage(context.Context, *SendChatMessageParams) (*ChatMessage, error)
+	DropDatabase(context.Context, *DropDatabaseParams) (*DropDatabaseMessage, error)
 	mustEmbedUnimplementedChatServiceServer()
 }
 
@@ -109,6 +148,15 @@ func (UnimplementedChatServiceServer) UpdateUser(context.Context, *UpdateUserPar
 }
 func (UnimplementedChatServiceServer) GetUsers(context.Context, *GetUsersParams) (*UsersList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
+}
+func (UnimplementedChatServiceServer) GetChatMessages(context.Context, *GetChatMessagesParams) (*ChatMessageList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetChatMessages not implemented")
+}
+func (UnimplementedChatServiceServer) SendChatMessage(context.Context, *SendChatMessageParams) (*ChatMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendChatMessage not implemented")
+}
+func (UnimplementedChatServiceServer) DropDatabase(context.Context, *DropDatabaseParams) (*DropDatabaseMessage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DropDatabase not implemented")
 }
 func (UnimplementedChatServiceServer) mustEmbedUnimplementedChatServiceServer() {}
 
@@ -195,6 +243,60 @@ func _ChatService_GetUsers_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ChatService_GetChatMessages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetChatMessagesParams)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).GetChatMessages(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_GetChatMessages_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).GetChatMessages(ctx, req.(*GetChatMessagesParams))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChatService_SendChatMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendChatMessageParams)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).SendChatMessage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_SendChatMessage_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).SendChatMessage(ctx, req.(*SendChatMessageParams))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChatService_DropDatabase_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DropDatabaseParams)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).DropDatabase(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_DropDatabase_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).DropDatabase(ctx, req.(*DropDatabaseParams))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ChatService_ServiceDesc is the grpc.ServiceDesc for ChatService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -218,7 +320,19 @@ var ChatService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetUsers",
 			Handler:    _ChatService_GetUsers_Handler,
 		},
+		{
+			MethodName: "GetChatMessages",
+			Handler:    _ChatService_GetChatMessages_Handler,
+		},
+		{
+			MethodName: "SendChatMessage",
+			Handler:    _ChatService_SendChatMessage_Handler,
+		},
+		{
+			MethodName: "DropDatabase",
+			Handler:    _ChatService_DropDatabase_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "chat/chat.proto",
+	Metadata: "src/chat/chat.proto",
 }
