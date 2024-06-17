@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"github.com/jackc/pgconn"
 	pb "github.com/jmagazine/chat-app-grpc/src/chat"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
@@ -13,6 +11,9 @@ import (
 	"time"
 )
 
+var client pb.ChatServiceClient
+var conn *grpc.ClientConn
+
 func contains(slice []*pb.User, element *pb.User) bool {
 	for _, a := range slice {
 		if a == element {
@@ -21,9 +22,7 @@ func contains(slice []*pb.User, element *pb.User) bool {
 	}
 	return false
 }
-
-func TestUserMethods() {
-	// Dial connection to grpc server
+func InitTests() {
 	if err := godotenv.Load("src/test/.env.test"); err != nil {
 		log.Fatalf("Error loading .env.test file: %v", err)
 	}
@@ -31,55 +30,78 @@ func TestUserMethods() {
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
+	client = pb.NewChatServiceClient(conn)
+}
 
-	defer conn.Close()
-	c := pb.NewChatServiceClient(conn)
+func createUserWithParams(fullName string, userName string, password string) (*pb.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := client.CreateNewUser(ctx, &pb.CreateUserParams{FullName: fullName, Username: userName, Password: password})
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+// NoDuplicateUsersTest ensures you cannot create users with duplicate usernames.
+
+func TestUserMethods() {
+	AssertClientNotNil()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	if _, err := c.DropDatabase(ctx, &pb.DropDatabaseParams{Dbname: "users"}); err != nil {
-		if pgErr, ok := err.(*pgconn.PgError); ok {
-			if pgErr.Code == "3D000" { // 42P04: database already exists
-				fmt.Println("Database does not exist, skipping deletion.")
-			} else {
-				log.Printf("Failed to drop database: %v", err)
-			}
-		}
+	// Test if a user is created
+	user1 := &pb.User{FullName: time.DateTime, Username: "Test User", Password: "Test User"}
+	_, err := createUserWithParams(user1.FullName, user1.Username, user1.Password)
+	if err != nil {
+		log.Fatalf("TestUserMethods Failed: CreateUserWithParams failed: %v", err)
 	}
 
-	var new_users = make(map[string]string)
-	new_users["Alice"] = "aliceloves123"
-	new_users["Bob"] = "bobhates456"
-	for fullname, username := range new_users {
-		_, err := c.CreateNewUser(ctx, &pb.CreateUserParams{FullName: fullname, Username: username, Password: ""})
-		if err != nil {
-			log.Fatalf("could not create new user: %v", err)
-		}
-
-		params := &pb.GetUsersParams{}
-		getUsersRespose, err := c.GetUsers(ctx, params)
-		if err != nil {
-			log.Fatalf("could not get users: %v", err)
-		}
-
-		for _, user := range getUsersRespose.Users {
-			if !contains(getUsersRespose.Users, user) {
-				out := fmt.Sprint(`
-User Details:
-Full Name: %s
-Username: %s
-Id: %d`, user.GetFullName(), user.GetUsername(), user.GetId())
-				log.Fatalf(`---Failed TestUserMethods---
-User Not Found:
-%s`, out)
-			}
-		}
-
+	// Ensure attempts to create users with duplicate names fails
+	_, err = createUserWithParams(user1.FullName, user1.Username, user1.Password)
+	if err == nil {
+		log.Fatalf("TestUserMethods Failed: Duplicate users were allowed.")
 	}
-	fmt.Printf("TestUserMethods - Success\n")
 
+	// Ensure User was added to db
+	user2, err := client.GetUserByUsername(ctx, &pb.GetUserByUsernameParams{Username: user1.GetUsername()})
+	if err != nil {
+		log.Fatalf("TestUserMethods Failed: User was not added to the database: %v", err)
+	}
+	// id is handled by the database
+	if user1.FullName != user2.FullName ||
+		user1.Username != user2.Username ||
+		user1.Password != user2.Password {
+		log.Fatalf("TestUserMethods Failed: User fields did not match.")
+	}
+
+	// Ensure fields are properly updated
+	var updatedFields = make(map[string]string)
+	updatedFields["username"] = "Test User's New Username"
+	updatedFields["password"] = "12345678"
+	newUser, err := client.UpdateUser(ctx, &pb.UpdateUserParams{Username: user2.Username, UpdatedFields: updatedFields})
+	if err != nil {
+		log.Fatalf("TestUserMethods Failed: Failed to update user credentials: %v", err)
+	}
+	if newUser.Username != updatedFields["username"] || newUser.Password != updatedFields["password"] {
+		log.Fatalf("TestUserMethods Failed: fields are not consistent.")
+	}
+	// Ensure user was deleted
+	res, err := client.DeleteUserByUsername(ctx, &pb.DeleteUserByUsernameParams{Username: newUser.Username})
+	if err != nil || !res.GetSuccess() {
+		log.Fatalf("TestUserMethods Failed: DeleteUserByUsername failed %v", err)
+	}
+
+	log.Printf("TestUserMethods: Passed!")
+
+}
+func AssertClientNotNil() {
+	if client == nil {
+		log.Fatalf("ChatServer was never started. Call InitTests() first.")
+	}
 }
 
 func main() {
+	InitTests()
 	TestUserMethods()
 }

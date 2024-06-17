@@ -8,20 +8,23 @@ import "google/protobuf/timestamp.proto";
 
 service ChatService{
   rpc CreateNewUser(CreateUserParams) returns (User){}
-  rpc DeleteUserById(DeleteUserByIdParams) returns (DidDeleteUserMessage){}
+  rpc DeleteUserByUsername(DeleteUserByUsernameParams) returns (DidDeleteUserMessage){}
   rpc UpdateUser(UpdateUserParams) returns (User){}
-  rpc GetUsers(GetUsersParams) returns (UsersList){}
+  rpc GetAllUsers(GetAllUsersParams) returns (UsersList){}
+  rpc GetUserByUsername(GetUserByUsernameParams) returns (User){}
 
   rpc GetChatMessages(GetChatMessagesParams) returns (ChatMessageList){}
   rpc SendChatMessage(SendChatMessageParams) returns (ChatMessage){}
 
-  rpc DropDatabase(DropDatabaseParams) returns (DropDatabaseMessage){}
+  rpc DropTable(DropTableParams) returns (DropTableMessage){}
+
+  rpc GetServer(GetServerParams) returns (Server){}
 
 }
 
 
 message User {
-  bytes id=1;
+  string id=1;
   string fullName=2;
   string username=3;
   string password=4;
@@ -33,16 +36,20 @@ message CreateUserParams {
   string password=3;
 }
 
-message DeleteUserByIdParams{
-  bytes id = 1;
+message DeleteUserByUsernameParams{
+  string username = 1;
 }
 
 message UpdateUserParams {
-  bytes id=1;
+  string username=1;
   map<string, string> updatedFields=2;
 }
 
-message GetUsersParams{
+message GetUserByUsernameParams{
+  string username=1;
+}
+
+message GetAllUsersParams{
 }
 
 message UsersList {
@@ -50,13 +57,14 @@ message UsersList {
 }
 
 message DidDeleteUserMessage {
-  bytes id = 1;
+  string username = 1;
   bool success = 2;
   optional string error = 3;
 }
 
 message GetChatMessagesParams {
-  bytes sender_id = 1;
+  string sender_id = 1;
+  string recipient_id = 2;
 }
 
 message SendChatMessageParams {
@@ -65,18 +73,27 @@ message SendChatMessageParams {
 
 message ChatMessage {
   google.protobuf.Timestamp timestamp = 1;
-  bytes sender_id = 2;
-  bytes recipient_id = 3;
+  string sender = 2;
+  string recipient = 3;
+  string text = 4;
 }
 
 message ChatMessageList {
   repeated ChatMessage messages = 1;
 }
 
-message DropDatabaseParams {
-  string dbname=1;
+message DropTableParams {
+  string tableName=1;
 }
 
-message DropDatabaseMessage{
+message DropTableMessage{
   bool success=1;
+}
+
+message GetServerParams{
+  string password = 1;
+}
+
+message Server{
+  string port = 1;
 }
