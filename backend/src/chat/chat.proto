@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package chat;
+
+option go_package = "github.com/chat-app-grpc;chat_app_grpc";
+
+import "google/protobuf/timestamp.proto";
+import "../../googleapisgoogle/api/annotations.proto" ;
+ 
+
+service ChatService {
+  rpc CreateNewUser(CreateUserParams) returns (User) {
+    option (google.api.http) = {
+      post: "/v1/users"
+      body: "*"
+    };
+  }
+  rpc DeleteUserByUsername(DeleteUserByUsernameParams) returns (DidDeleteUserMessage) {
+    option (google.api.http) = {
+      delete: "/v1/users/{username}"
+    };
+  }
+  rpc UpdateUser(UpdateUserParams) returns (User) {
+    option (google.api.http) = {
+      put: "/v1/users/{username}"
+      body: "*"
+    };
+  }
+  rpc GetAllUsers(GetAllUsersParams) returns (UsersList) {
+    option (google.api.http) = {
+      get: "/v1/users"
+    };
+  }
+  rpc GetUserByUsername(GetUserByUsernameParams) returns (User) {
+    option (google.api.http) = {
+      get: "/v1/users/{username}"
+    };
+  }
+  rpc GetChatMessages(GetChatMessagesParams) returns (ChatMessageList) {
+    option (google.api.http) = {
+      get: "/v1/messages/{sender_id}/{recipient_id}"
+    };
+  }
+  rpc SendChatMessage(SendChatMessageParams) returns (ChatMessage) {
+    option (google.api.http) = {
+      post: "/v1/messages"
+      body: "*"
+    };
+  }
+  rpc DropTable(DropTableParams) returns (DropTableMessage) {
+    option (google.api.http) = {
+      delete: "/v1/tables/{tableName}"
+    };
+  }
+}
+
+message User {
+  string id = 1;
+  string fullName = 2;
+  string username = 3;
+  string password = 4;
+}
+
+message CreateUserParams {
+  string fullName = 1;
+  string username = 2;
+  string password = 3;
+}
+
+message DeleteUserByUsernameParams {
+  string username = 1;
+}
+
+message UpdateUserParams {
+  string username = 1;
+  map<string, string> updatedFields = 2;
+}
+
+message GetUserByUsernameParams {
+  string username = 1;
+}
+
+message GetAllUsersParams {}
+
+message UsersList {
+  repeated User users = 1;
+}
+
+message DidDeleteUserMessage {
+  string username = 1;
+  bool success = 2;
+  string error = 3; // optional removed, use `string`
+}
+
+message GetChatMessagesParams {
+  string sender_id = 1;
+  string recipient_id = 2;
+}
+
+message SendChatMessageParams {
+  ChatMessage message = 1;
+}
+
+message ChatMessage {
+  google.protobuf.Timestamp timestamp = 1;
+  string sender = 2;
+  string recipient = 3;
+  string text = 4;
+}
+
+message ChatMessageList {
+  repeated ChatMessage messages = 1;
+}
+
+message DropTableParams {
+  string tableName = 1;
+}
+
+message DropTableMessage {
+  bool success = 1;
+}

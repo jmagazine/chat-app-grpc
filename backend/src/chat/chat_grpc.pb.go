@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.4.0
 // - protoc             v5.27.1
-// source: src/chat/chat.proto
+// source: chat/chat.proto
 
 package chat_app_grpc
 
@@ -27,7 +27,6 @@ const (
 	ChatService_GetChatMessages_FullMethodName      = "/chat.ChatService/GetChatMessages"
 	ChatService_SendChatMessage_FullMethodName      = "/chat.ChatService/SendChatMessage"
 	ChatService_DropTable_FullMethodName            = "/chat.ChatService/DropTable"
-	ChatService_GetServer_FullMethodName            = "/chat.ChatService/GetServer"
 )
 
 // ChatServiceClient is the client API for ChatService service.
@@ -42,7 +41,6 @@ type ChatServiceClient interface {
 	GetChatMessages(ctx context.Context, in *GetChatMessagesParams, opts ...grpc.CallOption) (*ChatMessageList, error)
 	SendChatMessage(ctx context.Context, in *SendChatMessageParams, opts ...grpc.CallOption) (*ChatMessage, error)
 	DropTable(ctx context.Context, in *DropTableParams, opts ...grpc.CallOption) (*DropTableMessage, error)
-	GetServer(ctx context.Context, in *GetServerParams, opts ...grpc.CallOption) (*Server, error)
 }
 
 type chatServiceClient struct {
@@ -133,16 +131,6 @@ func (c *chatServiceClient) DropTable(ctx context.Context, in *DropTableParams, 
 	return out, nil
 }
 
-func (c *chatServiceClient) GetServer(ctx context.Context, in *GetServerParams, opts ...grpc.CallOption) (*Server, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Server)
-	err := c.cc.Invoke(ctx, ChatService_GetServer_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ChatServiceServer is the server API for ChatService service.
 // All implementations must embed UnimplementedChatServiceServer
 // for forward compatibility
@@ -155,7 +143,6 @@ type ChatServiceServer interface {
 	GetChatMessages(context.Context, *GetChatMessagesParams) (*ChatMessageList, error)
 	SendChatMessage(context.Context, *SendChatMessageParams) (*ChatMessage, error)
 	DropTable(context.Context, *DropTableParams) (*DropTableMessage, error)
-	GetServer(context.Context, *GetServerParams) (*Server, error)
 	mustEmbedUnimplementedChatServiceServer()
 }
 
@@ -186,9 +173,6 @@ func (UnimplementedChatServiceServer) SendChatMessage(context.Context, *SendChat
 }
 func (UnimplementedChatServiceServer) DropTable(context.Context, *DropTableParams) (*DropTableMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DropTable not implemented")
-}
-func (UnimplementedChatServiceServer) GetServer(context.Context, *GetServerParams) (*Server, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetServer not implemented")
 }
 func (UnimplementedChatServiceServer) mustEmbedUnimplementedChatServiceServer() {}
 
@@ -347,24 +331,6 @@ func _ChatService_DropTable_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ChatService_GetServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetServerParams)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ChatServiceServer).GetServer(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ChatService_GetServer_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatServiceServer).GetServer(ctx, req.(*GetServerParams))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // ChatService_ServiceDesc is the grpc.ServiceDesc for ChatService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -404,11 +370,7 @@ var ChatService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "DropTable",
 			Handler:    _ChatService_DropTable_Handler,
 		},
-		{
-			MethodName: "GetServer",
-			Handler:    _ChatService_GetServer_Handler,
-		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "src/chat/chat.proto",
+	Metadata: "chat/chat.proto",
 }

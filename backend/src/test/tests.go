@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
-	pb "github.com/jmagazine/chat-app-grpc/src/chat"
-	"github.com/joho/godotenv"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"os"
 	"time"
+
+	pb "github.com/jmagazine/chat-app-grpc/chat"
+	"github.com/joho/godotenv"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var client pb.ChatServiceClient

@@ -1,13 +1,14 @@
-package main
+package chat_app_grpc
 
 import (
 	"context"
 	"fmt"
-	pb "github.com/jmagazine/chat-app-grpc/src/chat"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"time"
+
+	pb "github.com/jmagazine/chat-app-grpc/chat"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -42,8 +43,8 @@ Username: %s
 Id: %d`, r.GetFullName(), r.GetUsername(), r.GetId())
 
 	}
-	params := &pb.GetUsersParams{}
-	r, err := c.GetUsers(ctx, params)
+	params := &pb.GetAllUsersParams{}
+	r, err := c.GetAllUsers(ctx, params)
 	if err != nil {
 		log.Fatalf("could not get users: %v", err)
 	}

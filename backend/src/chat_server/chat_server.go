@@ -1,20 +1,19 @@
-package main
+package chat_app_grpc
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4"
-	pb "github.com/jmagazine/chat-app-grpc/src/chat"
-	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
-	"google.golang.org/grpc"
 	"log"
 	"net"
 	"os"
-	"strconv"
 	"strings"
+
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
+	pb "github.com/jmagazine/chat-app-grpc/chat"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+	"google.golang.org/grpc"
 )
 
 var address string
@@ -269,15 +268,6 @@ func (server *ChatServer) DropTable(ctx context.Context, in *pb.DropTableParams)
 		return &pb.DropTableMessage{Success: false}, err
 	}
 	return &pb.DropTableMessage{Success: true}, nil
-}
-
-func (server *ChatServer) GetServer(ctx context.Context, in *pb.GetServerParams) (*pb.Server, error) {
-	if in.GetPassword() != os.Getenv("GET_SERVER_PASSWORD") {
-		log.Printf("Invalid password!")
-		return nil, errors.New("invalid password")
-	}
-
-	return &pb.Server{Port: strconv.Itoa(int(server.conn.Config().Port))}, nil
 }
 
 func main() {
