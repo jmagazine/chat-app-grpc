@@ -5,7 +5,7 @@ package chat;
 option go_package = "github.com/chat-app-grpc;chat_app_grpc";
 
 import "google/protobuf/timestamp.proto";
-import "../../googleapisgoogle/api/annotations.proto" ;
+import "google/api/annotations.proto";
  
 
 service ChatService {

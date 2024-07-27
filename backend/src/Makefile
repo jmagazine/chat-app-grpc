@@ -1,8 +1,8 @@
 .PHONY: generate_grpc_code
 
-generate_grpc_code:
+generate_js_code:
 	pwd
-	protoc --go_out=. --go_opt=paths=source_relative \
-	       --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-	       chat\chat.proto
-	protoc --js_out=import_style=commonjs,binary:. --grpc-web_out=import_style=commonjs,mode=grpcwebtext:. chat/chat.proto
+	protoc -I=chat/ -I=../../googleapis \
+       --js_out=import_style=commonjs,binary:chat_server \
+       --grpc-web_out=import_style=commonjs,mode=grpcwebtext:chat_server \
+       chat/chat.proto
