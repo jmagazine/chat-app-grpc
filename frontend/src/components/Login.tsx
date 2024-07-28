@@ -1,11 +1,29 @@
 import "./styles/Login.css";
 import Box from "@mui/icons-material";
 import { TextField } from "@mui/material";
-import * as proto from "../../../backend/src/chat_server/chat_grpc_web_pb.js"; // Adjust the path as needed
+import { ChatServiceClient } from "../gen/ChatServiceClientPb";
+import { LoginRequest, LoginResponse } from "../gen/chat_pb.d.ts";
+
+// Adjust the path as needed
 // import { CreateUserParams } from "../../../backend/src/chat_server/chat_pb";
 // Import message class
-function Home() {
-  console.log(proto);
+
+interface Props {
+  client: ChatServiceClient;
+}
+
+function Home({ client }: Props) {
+  const handleLogin = () => {
+    const username = (
+      document.getElementById("username-field") as HTMLInputElement
+    )?.value;
+    const password = (
+      document.getElementById("password-field") as HTMLInputElement
+    )?.value;
+    console.log(username, password);
+  };
+  const request = new LoginRequest();
+
   return (
     <div className="login-container">
       <div className="title-subtitle">
@@ -28,7 +46,9 @@ function Home() {
           sx={{ marginTop: "10px" }}
         />
       </div>
-      <div className="login-button">Login</div>
+      <div className="login-button" onClick={handleLogin}>
+        Login
+      </div>
       <div className="signup-button">Already Have an Account? Sign Up.</div>
     </div>
   );

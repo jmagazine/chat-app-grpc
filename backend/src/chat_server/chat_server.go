@@ -10,7 +10,7 @@ import (
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
-	pb "github.com/jmagazine/chat-app-grpc/chat"
+	pb "github.com/jmagazine/chat-app-grpc/chat_server/gen/github.com/chat-app-grpc"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
@@ -40,9 +40,9 @@ CREATE DATABASE chat-app-grpc);`
 	createUsersTbl := `
 CREATE TABLE IF NOT EXISTS users (
     Id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    FullName VARCHAR(255) NOT NULL,
-    Username VARCHAR(255) NOT NULL UNIQUE,
-    Password VARCHAR(255) NOT NULL
+    fullname VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL
 );`
 
 	createUUIDExtension := `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -93,6 +93,20 @@ CREATE TABLE IF NOT EXISTS users (
 	tx.Commit(ctx)
 
 	return new_user, nil
+}
+
+func (server *ChatServer) Login(ctx context.Context, in *pb.LoginParams) (*pb.User, error) {
+	loginQuery := "SELECT * FROM users WHERE username = $1 and password = $2"
+	rows, err := server.conn.Query(ctx, loginQuery, in.GetUsername(), in.GetPassword())
+	if err != nil {
+		log.Printf("failed to find user with specified credentials")
+	}
+	user := &pb.User{}
+	if err := rows.Scan(&user.Id, &user.FullName, &user.Username, &user.Password); err != nil {
+		log.Printf("Failed to find updated user: %v\n", err)
+		return nil, err
+	}
+	return user, nil
 }
 
 // Run starts the server.
