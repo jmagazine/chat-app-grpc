@@ -254,47 +254,47 @@ export class ChatServiceClient {
     this.methodDescriptorGetUserByUsername);
   }
 
-  methodDescriptorLogin = new grpcWeb.MethodDescriptor(
-    '/chat.ChatService/Login',
+  methodDescriptorGetUser = new grpcWeb.MethodDescriptor(
+    '/chat.ChatService/GetUser',
     grpcWeb.MethodType.UNARY,
-    chat_pb.LoginParams,
-    chat_pb.LoginResponse,
-    (request: chat_pb.LoginParams) => {
+    chat_pb.GetUserParams,
+    chat_pb.User,
+    (request: chat_pb.GetUserParams) => {
       return request.serializeBinary();
     },
-    chat_pb.LoginResponse.deserializeBinary
+    chat_pb.User.deserializeBinary
   );
 
-  login(
-    request: chat_pb.LoginParams,
-    metadata?: grpcWeb.Metadata | null): Promise<chat_pb.LoginResponse>;
+  getUser(
+    request: chat_pb.GetUserParams,
+    metadata?: grpcWeb.Metadata | null): Promise<chat_pb.User>;
 
-  login(
-    request: chat_pb.LoginParams,
+  getUser(
+    request: chat_pb.GetUserParams,
     metadata: grpcWeb.Metadata | null,
     callback: (err: grpcWeb.RpcError,
-               response: chat_pb.LoginResponse) => void): grpcWeb.ClientReadableStream<chat_pb.LoginResponse>;
+               response: chat_pb.User) => void): grpcWeb.ClientReadableStream<chat_pb.User>;
 
-  login(
-    request: chat_pb.LoginParams,
+  getUser(
+    request: chat_pb.GetUserParams,
     metadata?: grpcWeb.Metadata | null,
     callback?: (err: grpcWeb.RpcError,
-               response: chat_pb.LoginResponse) => void) {
+               response: chat_pb.User) => void) {
     if (callback !== undefined) {
       return this.client_.rpcCall(
         this.hostname_ +
-          '/chat.ChatService/Login',
+          '/chat.ChatService/GetUser',
         request,
         metadata || {},
-        this.methodDescriptorLogin,
+        this.methodDescriptorGetUser,
         callback);
     }
     return this.client_.unaryCall(
     this.hostname_ +
-      '/chat.ChatService/Login',
+      '/chat.ChatService/GetUser',
     request,
     metadata || {},
-    this.methodDescriptorLogin);
+    this.methodDescriptorGetUser);
   }
 
   methodDescriptorGetChatMessages = new grpcWeb.MethodDescriptor(
@@ -381,6 +381,49 @@ export class ChatServiceClient {
     request,
     metadata || {},
     this.methodDescriptorSendChatMessage);
+  }
+
+  methodDescriptorDeleteAllUsers = new grpcWeb.MethodDescriptor(
+    '/chat.ChatService/DeleteAllUsers',
+    grpcWeb.MethodType.UNARY,
+    chat_pb.DeleteAllUsersParams,
+    chat_pb.DidDeleteAllUsers,
+    (request: chat_pb.DeleteAllUsersParams) => {
+      return request.serializeBinary();
+    },
+    chat_pb.DidDeleteAllUsers.deserializeBinary
+  );
+
+  deleteAllUsers(
+    request: chat_pb.DeleteAllUsersParams,
+    metadata?: grpcWeb.Metadata | null): Promise<chat_pb.DidDeleteAllUsers>;
+
+  deleteAllUsers(
+    request: chat_pb.DeleteAllUsersParams,
+    metadata: grpcWeb.Metadata | null,
+    callback: (err: grpcWeb.RpcError,
+               response: chat_pb.DidDeleteAllUsers) => void): grpcWeb.ClientReadableStream<chat_pb.DidDeleteAllUsers>;
+
+  deleteAllUsers(
+    request: chat_pb.DeleteAllUsersParams,
+    metadata?: grpcWeb.Metadata | null,
+    callback?: (err: grpcWeb.RpcError,
+               response: chat_pb.DidDeleteAllUsers) => void) {
+    if (callback !== undefined) {
+      return this.client_.rpcCall(
+        this.hostname_ +
+          '/chat.ChatService/DeleteAllUsers',
+        request,
+        metadata || {},
+        this.methodDescriptorDeleteAllUsers,
+        callback);
+    }
+    return this.client_.unaryCall(
+    this.hostname_ +
+      '/chat.ChatService/DeleteAllUsers',
+    request,
+    metadata || {},
+    this.methodDescriptorDeleteAllUsers);
   }
 
   methodDescriptorDropTable = new grpcWeb.MethodDescriptor(

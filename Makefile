@@ -11,10 +11,10 @@ TS_OUT_DIR = ./frontend/src/gen
 
 generate_go_code:
 	pwd
-	protoc --proto_path=$(BACKEND_SRC_DIR)/protos --go_out=$(GO_OUT_DIR) --go-grpc_out=$(GO_OUT_DIR) $(BACKEND_SRC_DIR)/protos/chat.proto
+	@protoc --proto_path=$(BACKEND_SRC_DIR)/protos --go_out=$(GO_OUT_DIR) --go-grpc_out=$(GO_OUT_DIR) $(BACKEND_SRC_DIR)/protos/chat.proto
 
 
 generate_ts_code:
-	protoc --proto_path=$(BACKEND_SRC_DIR)/protos --proto_path=$(INCLUDE_DIR) --grpc-web_out=import_style=typescript,mode=grpcwebtext:$(TS_OUT_DIR) $(BACKEND_SRC_DIR)/protos/chat.proto
+	@protoc --proto_path=$(BACKEND_SRC_DIR)/protos --proto_path=$(INCLUDE_DIR) --grpc-web_out=import_style=typescript,mode=grpcwebtext:$(TS_OUT_DIR) $(BACKEND_SRC_DIR)/protos/chat.proto
 
 generate_all: generate_go_code generate_ts_code

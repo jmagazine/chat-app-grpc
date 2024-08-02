@@ -7,14 +7,11 @@ export class User extends jspb.Message {
   getId(): string;
   setId(value: string): User;
 
-  getFullname(): string;
-  setFullname(value: string): User;
+  getFullName(): string;
+  setFullName(value: string): User;
 
   getUsername(): string;
   setUsername(value: string): User;
-
-  getPassword(): string;
-  setPassword(value: string): User;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): User.AsObject;
@@ -27,21 +24,20 @@ export class User extends jspb.Message {
 export namespace User {
   export type AsObject = {
     id: string,
-    fullname: string,
+    fullName: string,
     username: string,
-    password: string,
   }
 }
 
 export class CreateUserParams extends jspb.Message {
-  getFullname(): string;
-  setFullname(value: string): CreateUserParams;
+  getFullName(): string;
+  setFullName(value: string): CreateUserParams;
 
   getUsername(): string;
   setUsername(value: string): CreateUserParams;
 
-  getPassword(): string;
-  setPassword(value: string): CreateUserParams;
+  getHashToken(): string;
+  setHashToken(value: string): CreateUserParams;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateUserParams.AsObject;
@@ -53,9 +49,9 @@ export class CreateUserParams extends jspb.Message {
 
 export namespace CreateUserParams {
   export type AsObject = {
-    fullname: string,
+    fullName: string,
     username: string,
-    password: string,
+    hashToken: string,
   }
 }
 
@@ -77,54 +73,25 @@ export namespace DeleteUserByUsernameParams {
   }
 }
 
-export class LoginParams extends jspb.Message {
+export class GetUserParams extends jspb.Message {
   getUsername(): string;
-  setUsername(value: string): LoginParams;
+  setUsername(value: string): GetUserParams;
 
-  getPassword(): string;
-  setPassword(value: string): LoginParams;
+  getHashToken(): string;
+  setHashToken(value: string): GetUserParams;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): LoginParams.AsObject;
-  static toObject(includeInstance: boolean, msg: LoginParams): LoginParams.AsObject;
-  static serializeBinaryToWriter(message: LoginParams, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): LoginParams;
-  static deserializeBinaryFromReader(message: LoginParams, reader: jspb.BinaryReader): LoginParams;
+  toObject(includeInstance?: boolean): GetUserParams.AsObject;
+  static toObject(includeInstance: boolean, msg: GetUserParams): GetUserParams.AsObject;
+  static serializeBinaryToWriter(message: GetUserParams, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): GetUserParams;
+  static deserializeBinaryFromReader(message: GetUserParams, reader: jspb.BinaryReader): GetUserParams;
 }
 
-export namespace LoginParams {
+export namespace GetUserParams {
   export type AsObject = {
     username: string,
-    password: string,
-  }
-}
-
-export class LoginResponse extends jspb.Message {
-  getResponseCode(): number;
-  setResponseCode(value: number): LoginResponse;
-
-  getResponse(): string;
-  setResponse(value: string): LoginResponse;
-  hasResponse(): boolean;
-  clearResponse(): LoginResponse;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): LoginResponse.AsObject;
-  static toObject(includeInstance: boolean, msg: LoginResponse): LoginResponse.AsObject;
-  static serializeBinaryToWriter(message: LoginResponse, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): LoginResponse;
-  static deserializeBinaryFromReader(message: LoginResponse, reader: jspb.BinaryReader): LoginResponse;
-}
-
-export namespace LoginResponse {
-  export type AsObject = {
-    responseCode: number,
-    response?: string,
-  }
-
-  export enum ResponseCase { 
-    _RESPONSE_NOT_SET = 0,
-    RESPONSE = 2,
+    hashToken: string,
   }
 }
 
@@ -330,8 +297,8 @@ export namespace ChatMessageList {
 }
 
 export class DropTableParams extends jspb.Message {
-  getTablename(): string;
-  setTablename(value: string): DropTableParams;
+  getTableName(): string;
+  setTableName(value: string): DropTableParams;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DropTableParams.AsObject;
@@ -343,7 +310,7 @@ export class DropTableParams extends jspb.Message {
 
 export namespace DropTableParams {
   export type AsObject = {
-    tablename: string,
+    tableName: string,
   }
 }
 
@@ -365,9 +332,37 @@ export namespace DropTableMessage {
   }
 }
 
+export class DeleteAllUsersParams extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeleteAllUsersParams.AsObject;
+  static toObject(includeInstance: boolean, msg: DeleteAllUsersParams): DeleteAllUsersParams.AsObject;
+  static serializeBinaryToWriter(message: DeleteAllUsersParams, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteAllUsersParams;
+  static deserializeBinaryFromReader(message: DeleteAllUsersParams, reader: jspb.BinaryReader): DeleteAllUsersParams;
+}
+
+export namespace DeleteAllUsersParams {
+  export type AsObject = {
+  }
+}
+
+export class DidDeleteAllUsers extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DidDeleteAllUsers.AsObject;
+  static toObject(includeInstance: boolean, msg: DidDeleteAllUsers): DidDeleteAllUsers.AsObject;
+  static serializeBinaryToWriter(message: DidDeleteAllUsers, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): DidDeleteAllUsers;
+  static deserializeBinaryFromReader(message: DidDeleteAllUsers, reader: jspb.BinaryReader): DidDeleteAllUsers;
+}
+
+export namespace DidDeleteAllUsers {
+  export type AsObject = {
+  }
+}
+
 export class GetServerParams extends jspb.Message {
-  getPassword(): string;
-  setPassword(value: string): GetServerParams;
+  getHashToken(): string;
+  setHashToken(value: string): GetServerParams;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetServerParams.AsObject;
@@ -379,7 +374,7 @@ export class GetServerParams extends jspb.Message {
 
 export namespace GetServerParams {
   export type AsObject = {
-    password: string,
+    hashToken: string,
   }
 }
 

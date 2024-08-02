@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	pb "github.com/jmagazine/chat-app-grpc/chat"
+	pb "github.com/jmagazine/chat-app-grpc/chat_server/gen/github.com/chat-app-grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -32,7 +32,7 @@ func main() {
 	new_users["Alice"] = "aliceloves123"
 	new_users["Bob"] = "bobhates456"
 	for fullname, username := range new_users {
-		r, err := c.CreateNewUser(ctx, &pb.CreateUserParams{FullName: fullname, Username: username, Password: ""})
+		r, err := c.CreateNewUser(ctx, &pb.CreateUserParams{FullName: fullname, Username: username, HashToken: ""})
 		if err != nil {
 			log.Fatalf("could not create new user: %v", err)
 		}

@@ -24,9 +24,10 @@ const (
 	ChatService_UpdateUser_FullMethodName           = "/chat.ChatService/UpdateUser"
 	ChatService_GetAllUsers_FullMethodName          = "/chat.ChatService/GetAllUsers"
 	ChatService_GetUserByUsername_FullMethodName    = "/chat.ChatService/GetUserByUsername"
-	ChatService_Login_FullMethodName                = "/chat.ChatService/Login"
+	ChatService_GetUser_FullMethodName              = "/chat.ChatService/GetUser"
 	ChatService_GetChatMessages_FullMethodName      = "/chat.ChatService/GetChatMessages"
 	ChatService_SendChatMessage_FullMethodName      = "/chat.ChatService/SendChatMessage"
+	ChatService_DeleteAllUsers_FullMethodName       = "/chat.ChatService/DeleteAllUsers"
 	ChatService_DropTable_FullMethodName            = "/chat.ChatService/DropTable"
 	ChatService_GetServer_FullMethodName            = "/chat.ChatService/GetServer"
 )
@@ -40,9 +41,10 @@ type ChatServiceClient interface {
 	UpdateUser(ctx context.Context, in *UpdateUserParams, opts ...grpc.CallOption) (*User, error)
 	GetAllUsers(ctx context.Context, in *GetAllUsersParams, opts ...grpc.CallOption) (*UsersList, error)
 	GetUserByUsername(ctx context.Context, in *GetUserByUsernameParams, opts ...grpc.CallOption) (*User, error)
-	Login(ctx context.Context, in *LoginParams, opts ...grpc.CallOption) (*LoginResponse, error)
+	GetUser(ctx context.Context, in *GetUserParams, opts ...grpc.CallOption) (*User, error)
 	GetChatMessages(ctx context.Context, in *GetChatMessagesParams, opts ...grpc.CallOption) (*ChatMessageList, error)
 	SendChatMessage(ctx context.Context, in *SendChatMessageParams, opts ...grpc.CallOption) (*ChatMessage, error)
+	DeleteAllUsers(ctx context.Context, in *DeleteAllUsersParams, opts ...grpc.CallOption) (*DidDeleteAllUsers, error)
 	DropTable(ctx context.Context, in *DropTableParams, opts ...grpc.CallOption) (*DropTableMessage, error)
 	GetServer(ctx context.Context, in *GetServerParams, opts ...grpc.CallOption) (*Server, error)
 }
@@ -105,10 +107,10 @@ func (c *chatServiceClient) GetUserByUsername(ctx context.Context, in *GetUserBy
 	return out, nil
 }
 
-func (c *chatServiceClient) Login(ctx context.Context, in *LoginParams, opts ...grpc.CallOption) (*LoginResponse, error) {
+func (c *chatServiceClient) GetUser(ctx context.Context, in *GetUserParams, opts ...grpc.CallOption) (*User, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(LoginResponse)
-	err := c.cc.Invoke(ctx, ChatService_Login_FullMethodName, in, out, cOpts...)
+	out := new(User)
+	err := c.cc.Invoke(ctx, ChatService_GetUser_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -129,6 +131,16 @@ func (c *chatServiceClient) SendChatMessage(ctx context.Context, in *SendChatMes
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ChatMessage)
 	err := c.cc.Invoke(ctx, ChatService_SendChatMessage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chatServiceClient) DeleteAllUsers(ctx context.Context, in *DeleteAllUsersParams, opts ...grpc.CallOption) (*DidDeleteAllUsers, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DidDeleteAllUsers)
+	err := c.cc.Invoke(ctx, ChatService_DeleteAllUsers_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -164,9 +176,10 @@ type ChatServiceServer interface {
 	UpdateUser(context.Context, *UpdateUserParams) (*User, error)
 	GetAllUsers(context.Context, *GetAllUsersParams) (*UsersList, error)
 	GetUserByUsername(context.Context, *GetUserByUsernameParams) (*User, error)
-	Login(context.Context, *LoginParams) (*LoginResponse, error)
+	GetUser(context.Context, *GetUserParams) (*User, error)
 	GetChatMessages(context.Context, *GetChatMessagesParams) (*ChatMessageList, error)
 	SendChatMessage(context.Context, *SendChatMessageParams) (*ChatMessage, error)
+	DeleteAllUsers(context.Context, *DeleteAllUsersParams) (*DidDeleteAllUsers, error)
 	DropTable(context.Context, *DropTableParams) (*DropTableMessage, error)
 	GetServer(context.Context, *GetServerParams) (*Server, error)
 	mustEmbedUnimplementedChatServiceServer()
@@ -191,14 +204,17 @@ func (UnimplementedChatServiceServer) GetAllUsers(context.Context, *GetAllUsersP
 func (UnimplementedChatServiceServer) GetUserByUsername(context.Context, *GetUserByUsernameParams) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserByUsername not implemented")
 }
-func (UnimplementedChatServiceServer) Login(context.Context, *LoginParams) (*LoginResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+func (UnimplementedChatServiceServer) GetUser(context.Context, *GetUserParams) (*User, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
 func (UnimplementedChatServiceServer) GetChatMessages(context.Context, *GetChatMessagesParams) (*ChatMessageList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetChatMessages not implemented")
 }
 func (UnimplementedChatServiceServer) SendChatMessage(context.Context, *SendChatMessageParams) (*ChatMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendChatMessage not implemented")
+}
+func (UnimplementedChatServiceServer) DeleteAllUsers(context.Context, *DeleteAllUsersParams) (*DidDeleteAllUsers, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAllUsers not implemented")
 }
 func (UnimplementedChatServiceServer) DropTable(context.Context, *DropTableParams) (*DropTableMessage, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DropTable not implemented")
@@ -309,20 +325,20 @@ func _ChatService_GetUserByUsername_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ChatService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LoginParams)
+func _ChatService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserParams)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ChatServiceServer).Login(ctx, in)
+		return srv.(ChatServiceServer).GetUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ChatService_Login_FullMethodName,
+		FullMethod: ChatService_GetUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChatServiceServer).Login(ctx, req.(*LoginParams))
+		return srv.(ChatServiceServer).GetUser(ctx, req.(*GetUserParams))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -359,6 +375,24 @@ func _ChatService_SendChatMessage_Handler(srv interface{}, ctx context.Context, 
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ChatServiceServer).SendChatMessage(ctx, req.(*SendChatMessageParams))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChatService_DeleteAllUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAllUsersParams)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChatServiceServer).DeleteAllUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChatService_DeleteAllUsers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChatServiceServer).DeleteAllUsers(ctx, req.(*DeleteAllUsersParams))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -427,8 +461,8 @@ var ChatService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ChatService_GetUserByUsername_Handler,
 		},
 		{
-			MethodName: "Login",
-			Handler:    _ChatService_Login_Handler,
+			MethodName: "GetUser",
+			Handler:    _ChatService_GetUser_Handler,
 		},
 		{
 			MethodName: "GetChatMessages",
@@ -437,6 +471,10 @@ var ChatService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SendChatMessage",
 			Handler:    _ChatService_SendChatMessage_Handler,
+		},
+		{
+			MethodName: "DeleteAllUsers",
+			Handler:    _ChatService_DeleteAllUsers_Handler,
 		},
 		{
 			MethodName: "DropTable",
