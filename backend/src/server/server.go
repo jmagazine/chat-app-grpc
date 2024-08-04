@@ -10,7 +10,7 @@ import (
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
-	pb "github.com/jmagazine/chat-app-grpc/chat_server/gen/github.com/chat-app-grpc"
+	pb "github.com/jmagazine/chat-app-grpc/src/gen"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
@@ -30,9 +30,9 @@ func NewChatServer(test bool) *ChatServer {
 
 // USER FUNCTIONS
 
-// CreateNewUser defines the protocol to create a new user
-func (server *ChatServer) CreateNewUser(ctx context.Context, in *pb.CreateUserParams) (*pb.User, error) {
-	log.Printf("CreateNewUser - Received: %v", in.GetFullName())
+// CreateUser defines the protocol to create a new user
+func (server *ChatServer) CreateUser(ctx context.Context, in *pb.CreateUserParams) (*pb.User, error) {
+	log.Printf("CreateUser - Received: %v", in.GetFullName())
 	createUsersDb := `
 CREATE DATABASE chat-app-grpc);`
 
@@ -52,11 +52,11 @@ CREATE TABLE IF NOT EXISTS users (
 	if err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			if pgErr.Code == "42P04" { // 42P04: database already exists
-				fmt.Println("CreateNewUser - Database already exists, skipping creation.")
+				fmt.Println("CreateUser - Database already exists, skipping creation.")
 			}
 		} else {
 			// Other errors
-			fmt.Printf("CreateNewUser - Failed to create user db: %v\n", err)
+			fmt.Printf("CreateUser - Failed to create user db: %v\n", err)
 			return nil, err
 		}
 	}
@@ -64,13 +64,13 @@ CREATE TABLE IF NOT EXISTS users (
 	// Create uuid extension if it is not present
 	_, err = server.conn.Exec(ctx, createUUIDExtension)
 	if err != nil {
-		log.Printf("CreateNewUser - warning: UUIDExtension command was not executed: %v", err)
+		log.Printf("CreateUser - warning: UUIDExtension command was not executed: %v", err)
 	}
 
 	// Create table if it is not present
 	_, err = server.conn.Exec(ctx, createUsersTbl)
 	if err != nil {
-		fmt.Printf("CreateNewUser - Failed to create user table: %v\n", err)
+		fmt.Printf("CreateUser - Failed to create user table: %v\n", err)
 		return nil, err
 	}
 
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 	tx, err := server.conn.Begin(ctx)
 	if err != nil {
-		log.Fatalf("CreateNewUser - conn.Begin failed: %v", err)
+		log.Fatalf("CreateUser - conn.Begin failed: %v", err)
 		return nil, err
 	}
 	// update database
@@ -87,7 +87,7 @@ CREATE TABLE IF NOT EXISTS users (
 		new_user.FullName, new_user.Username, in.HashToken)
 	if err != nil {
 		tx.Rollback(ctx)
-		log.Printf("CreateNewUser - tx.Exec failed: %v", err)
+		log.Printf("CreateUser - tx.Exec failed: %v", err)
 		return nil, err
 	}
 
@@ -234,16 +234,6 @@ func (server *ChatServer) GetAllUsers(ctx context.Context, in *pb.GetAllUsersPar
 	}
 
 	return usersList, nil
-}
-
-func (server *ChatServer) GetUserByUsername(ctx context.Context, in *pb.GetUserByUsernameParams) (*pb.User, error) {
-	rows := server.conn.QueryRow(ctx, "select * from users where username = $1", in.Username)
-	user := &pb.User{}
-	err := rows.Scan(&user.Id, &user.FullName, &user.Username)
-	if err != nil {
-		return nil, err
-	}
-	return user, nil
 }
 
 // END OF USER FUNCTIONS

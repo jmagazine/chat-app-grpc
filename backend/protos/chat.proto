@@ -1,0 +1,153 @@
+syntax = "proto3";
+
+package chat;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/chat-app-grpc;chat_app_grpc";
+
+
+service ChatService{
+  rpc CreateUser(CreateUserParams) returns (User){
+    option (google.api.http) = {
+      post: "/v1/createUser"
+      body: "*"
+    };
+  }
+
+  rpc DeleteUserByUsername(DeleteUserByUsernameParams) returns (DidDeleteUserMessage){
+    option (google.api.http) = {
+      post: "/v1/DeleteUser"
+      body: "*"
+    };
+  }
+  
+  rpc UpdateUser(UpdateUserParams) returns (User){
+    option (google.api.http) = {
+      post: "/v1/UpdateUser"
+      body: "*"
+    };
+  }
+
+  rpc GetAllUsers(GetAllUsersParams) returns (UsersList){
+    option (google.api.http) = {
+      post: "/v1/GetAllUsers"
+      body: "*"
+    };
+  }
+
+
+  rpc GetUser(GetUserParams) returns (User){
+    option (google.api.http) = {
+      post: "/v1/GetUser"
+      body: "*"
+    };
+  }
+  rpc GetChatMessages(GetChatMessagesParams) returns (ChatMessageList){
+    option (google.api.http) = {
+      post: "/v1/GetChatMessages"
+      body: "*"
+    };
+  }
+
+  rpc SendChatMessage(SendChatMessageParams) returns (ChatMessage){
+    option (google.api.http) = {
+      post: "/v1/SendChatMessage"
+      body: "*"
+    };
+  }
+
+  rpc DeleteAllUsers(DeleteAllUsersParams) returns (DidDeleteAllUsers){
+    option (google.api.http) = {
+      post: "/v1/DeleteAllUsers"
+      body: "*"
+    };
+  }
+
+  rpc DropTable(DropTableParams) returns (DropTableMessage){
+    option (google.api.http) = {
+      post: "/v1/DropTable"
+      body: "*"
+    };
+  }
+
+
+}
+
+
+message User {
+  string id=1;
+  string full_name=2;
+  string username=3;
+}
+
+message CreateUserParams {
+  string full_name=1;
+  string username=2;
+  string hash_token=3;
+}
+
+message DeleteUserByUsernameParams{
+  string username = 1;
+}
+
+message GetUserParams{
+  string username = 1;
+  string hash_token = 2;
+}
+
+
+message UpdateUserParams {
+  string username=1;
+  map<string, string> updated_fields=2;
+}
+
+message GetAllUsersParams{
+}
+
+message UsersList {
+  repeated User users=1;
+}
+
+message DidDeleteUserMessage {
+  string username = 1;
+  bool success = 2;
+  optional string error = 3;
+}
+
+message GetChatMessagesParams {
+  string sender_id = 1;
+  string recipient_id = 2;
+}
+
+message SendChatMessageParams {
+  ChatMessage message = 1;
+}
+
+message ChatMessage {
+  google.protobuf.Timestamp timestamp = 1;
+  string sender = 2;
+  string recipient = 3;
+  string text = 4;
+}
+
+message ChatMessageList {
+  repeated ChatMessage messages = 1;
+}
+
+message DropTableParams {
+  string table_name = 1;
+}
+
+message DropTableMessage{
+  bool success=1;
+}
+
+message DeleteAllUsersParams{
+
+}
+
+message DidDeleteAllUsers{
+}
+

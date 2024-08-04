@@ -6,55 +6,53 @@ import (
 	"os"
 	"time"
 
-	"github.com/jmagazine/chat-app-grpc/utils"
+	"github.com/jmagazine/chat-app-grpc/src/utils"
 
-	pb "github.com/jmagazine/chat-app-grpc/chat_server/gen/github.com/chat-app-grpc"
+	pb "github.com/jmagazine/chat-app-grpc/src/gen"
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 var client pb.ChatServiceClient
+var ctx context.Context
+var cancel context.CancelFunc
 
+// Intialize variables before running tests
 func InitTests() {
-	if err := godotenv.Load("tests/.env.test"); err != nil {
+
+	if err := godotenv.Load(".env.test"); err != nil {
 		log.Fatalf("Error loading .env.test file: %v", err)
 	}
+
 	conn, err := grpc.NewClient(os.Getenv("ADDRESS"), grpc.WithTransportCredentials(insecure.NewCredentials()))
+
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
+
 	client = pb.NewChatServiceClient(conn)
+	ctx, cancel = context.WithTimeout(context.Background(), time.Second)
+
+	// Close connection
 }
-
-func createUserWithParams(ctx *context.Context, fullName string, userName string, hashToken string) (*pb.User, error) {
-	r, err := client.CreateNewUser(*ctx, &pb.CreateUserParams{FullName: fullName, Username: userName, HashToken: hashToken})
-	if err != nil {
-		log.Printf("failed to create new user: %v", err)
-		return nil, err
-	}
-
-	return r, nil
-}
-
-// NoDuplicateUsersTest ensures you cannot create users with duplicate usernames.
 
 func TestUserMethods(ctx context.Context, cancel context.CancelFunc) error {
+	// Ensure proper database connection
 	AssertClientNotNil()
-	token := utils.HashText("Password")
-	print(token)
 
-	// Test if a user is created
-	user1 := &pb.User{FullName: time.DateTime, Username: "Test User 1"}
-	_, err := createUserWithParams(&ctx, user1.FullName, user1.Username, token)
+	hashToken := utils.HashText(os.Getenv("TEST_USER_1_PASSWORD"))
+
+	user1, err := client.CreateUser(ctx, &pb.CreateUserParams{FullName: os.Getenv("TEST_USER_1_FULLNAME"), Username: os.Getenv("TEST_USER_1_USERNAME"), HashToken: hashToken})
 	if err != nil {
-		log.Printf("TestUserMethods Failed: CreateUserWithParams failed: %v", err)
 		return err
 	}
+
 	log.Print("Passed: User created successfully.")
 
 	// Ensure attempts to create users with duplicate names fails
-	_, err = createUserWithParams(&ctx, user1.FullName, user1.Username, token)
+	_, err = client.CreateUser(ctx, &pb.CreateUserParams{FullName: os.Getenv("TEST_USER_1_FULLNAME"), Username: os.Getenv("TEST_USER_1_USERNAME"), HashToken: hashToken})
+
 	if err == nil {
 		log.Printf("TestUserMethods Failed: Duplicate users were allowed.")
 		return err
@@ -62,12 +60,11 @@ func TestUserMethods(ctx context.Context, cancel context.CancelFunc) error {
 	log.Printf("Passed: No duplicate users are allowed.")
 
 	// Ensure User was added to db
-	user2, err := client.GetUser(ctx, &pb.GetUserParams{Username: user1.GetUsername(), HashToken: token})
+	user2, err := client.GetUser(ctx, &pb.GetUserParams{Username: user1.GetUsername(), HashToken: utils.HashText(os.Getenv("TEST_USER_1_PASSWORD"))})
 	if err != nil {
 		log.Printf("TestUserMethods Failed: User was not added to the database: %v", err)
 		return err
 	}
-
 	// id is handled by the database
 	if user1.FullName != user2.FullName ||
 		user1.Username != user2.Username {
@@ -110,7 +107,7 @@ func AssertClientNotNil() {
 
 func main() {
 	InitTests()
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+
 	err := TestUserMethods(ctx, cancel)
 	if err != nil {
 		log.Printf("TestUserMethods failed: %v", err)
