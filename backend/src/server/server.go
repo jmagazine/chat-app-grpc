@@ -315,8 +315,8 @@ func (server *ChatServer) DropTable(ctx context.Context, in *pb.DropTableParams)
 func main() {
 	// Instantiate database
 	ctx := context.Background()
-	if err := godotenv.Load("../.env.prod"); err != nil {
-		log.Fatalf("Error loading .env file: %v", err)
+	if err := godotenv.Load("../env.dev"); err != nil {
+		log.Fatalf("Error loading .env.dev file: %v", err)
 
 	}
 	var dbUrl = os.Getenv("DB_URL")
