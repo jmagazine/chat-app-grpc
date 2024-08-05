@@ -1,9 +1,10 @@
-version: v1
+version: v2
+name: jmagazine/chat-app-grpc/chat
+deps:
+  - buf.build/googleapis/googleapis
 lint:
   use:
     - DEFAULT
 breaking:
   use:
     - FILE
-deps:
-  - buf.build/googleapis/googleapis

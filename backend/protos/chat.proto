@@ -9,28 +9,28 @@ option go_package = "github.com/chat-app-grpc;chat_app_grpc";
 
 
 service ChatService{
-  rpc CreateUser(CreateUserParams) returns (User){
+  rpc CreateUser(CreateUserRequest) returns (CreateUserResponse){
     option (google.api.http) = {
       post: "/v1/createUser"
       body: "*"
     };
   }
 
-  rpc DeleteUserByUsername(DeleteUserByUsernameParams) returns (DidDeleteUserMessage){
+  rpc DeleteUserByUsername(DeleteUserRequest) returns (DeleteUserResponse){
     option (google.api.http) = {
       post: "/v1/DeleteUser"
       body: "*"
     };
   }
   
-  rpc UpdateUser(UpdateUserParams) returns (User){
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse){
     option (google.api.http) = {
       post: "/v1/UpdateUser"
       body: "*"
     };
   }
 
-  rpc GetAllUsers(GetAllUsersParams) returns (UsersList){
+  rpc GetAllUsers(GetAllUsersRequest) returns (GetAllUsersResponse){
     option (google.api.http) = {
       post: "/v1/GetAllUsers"
       body: "*"
@@ -38,34 +38,34 @@ service ChatService{
   }
 
 
-  rpc GetUser(GetUserParams) returns (User){
+  rpc GetUser(GetUserRequest) returns (GetUserResponse){
     option (google.api.http) = {
       post: "/v1/GetUser"
       body: "*"
     };
   }
-  rpc GetChatMessages(GetChatMessagesParams) returns (ChatMessageList){
+  rpc GetChatMessages(GetChatMessagesRequest) returns (GetChatMessagesResponse){
     option (google.api.http) = {
       post: "/v1/GetChatMessages"
       body: "*"
     };
   }
 
-  rpc SendChatMessage(SendChatMessageParams) returns (ChatMessage){
+  rpc SendChatMessage(SendChatMessageRequest) returns (SendChatMessageResponse){
     option (google.api.http) = {
       post: "/v1/SendChatMessage"
       body: "*"
     };
   }
 
-  rpc DeleteAllUsers(DeleteAllUsersParams) returns (DidDeleteAllUsers){
+  rpc DeleteAllUsers(DeleteAllUsersRequest) returns (DeleteAllUsersResponse){
     option (google.api.http) = {
       post: "/v1/DeleteAllUsers"
       body: "*"
     };
   }
 
-  rpc DropTable(DropTableParams) returns (DropTableMessage){
+  rpc DropTable(DropTableRequest) returns (DropTableResponse){
     option (google.api.http) = {
       post: "/v1/DropTable"
       body: "*"
@@ -82,48 +82,49 @@ message User {
   string username=3;
 }
 
-message CreateUserParams {
+message CreateUserRequest {
   string full_name=1;
   string username=2;
   string hash_token=3;
 }
 
-message DeleteUserByUsernameParams{
+message CreateUserResponse {
+  User user = 1;
+}
+
+message DeleteUserRequest{
   string username = 1;
 }
 
-message GetUserParams{
+message DeleteUserResponse{
+  User user = 1;
+}
+
+message GetUserRequest{
   string username = 1;
   string hash_token = 2;
 }
+message GetUserResponse{
+  User user = 1;
+}
 
 
-message UpdateUserParams {
+message UpdateUserRequest {
   string username=1;
   map<string, string> updated_fields=2;
 }
 
-message GetAllUsersParams{
+message UpdateUserResponse {
+  User user = 1;
 }
 
-message UsersList {
-  repeated User users=1;
+message GetAllUsersRequest{
+}
+message GetAllUsersResponse{
+  repeated User users = 1;
 }
 
-message DidDeleteUserMessage {
-  string username = 1;
-  bool success = 2;
-  optional string error = 3;
-}
-
-message GetChatMessagesParams {
-  string sender_id = 1;
-  string recipient_id = 2;
-}
-
-message SendChatMessageParams {
-  ChatMessage message = 1;
-}
+// Messages 
 
 message ChatMessage {
   google.protobuf.Timestamp timestamp = 1;
@@ -132,22 +133,34 @@ message ChatMessage {
   string text = 4;
 }
 
-message ChatMessageList {
+message GetChatMessagesRequest {
+  string sender_id = 1;
+  string recipient_id = 2;
+}
+message GetChatMessagesResponse {
+  ChatMessage message = 1;
+}
+
+message SendChatMessageRequest {
+  ChatMessage message = 1;
+}
+
+
+message SendChatMessageResponse {
   repeated ChatMessage messages = 1;
 }
 
-message DropTableParams {
+message DropTableRequest {
   string table_name = 1;
 }
 
-message DropTableMessage{
-  bool success=1;
+message DropTableResponse{
 }
 
-message DeleteAllUsersParams{
+message DeleteAllUsersRequest{
 
 }
 
-message DidDeleteAllUsers{
+message DeleteAllUsersResponse{
 }
 
