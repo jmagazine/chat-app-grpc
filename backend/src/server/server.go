@@ -16,6 +16,7 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type ChatServer struct {
@@ -327,9 +328,9 @@ func RunRESTServer(server ChatServer) error {
 	ctx := context.Background()
 	mux := runtime.NewServeMux()
 	gateway_addr := os.Getenv("GRPC_GATEWAY_PORT")
-	grpc_addr := os.Getenv("GRPC_LISTEN_ADDRESS")
+	grpc_gateway_addr := os.Getenv("GRPC_LISTEN_ADDRESS")
 
-	_, err := grpc.NewClient(grpc_addr, grpc.WithInsecure())
+	_, err := grpc.NewClient(grpc_gateway_addr, grpc.WithInsecure())
 
 	if err != nil {
 		return err
@@ -348,32 +349,48 @@ func RunRESTServer(server ChatServer) error {
 
 }
 func main() {
-	// Instantiate database
-	ctx := context.Background()
-	if err := godotenv.Load("C:/Users/joshm/Desktop/code/chat-app-grpc/backend/dev.env"); err != nil {
+	// Load .env
+	if err := godotenv.Load("../dev.env"); err != nil {
 		log.Fatalf("Error loading dev.env file: %v", err)
-
 	}
 
-	var dbURL = os.Getenv("DB_URL")
+	// Set up a connection to the chat server.
 
-	// go func() {
-	// 	log.Printf("Starting REST server...")
-	// 	// if err := RunRESTServer(chatServer); err != nil {
-	// 	// 	log.Fatalf("failed to start server: %v", err)
-	// 	// }
-	// }()
-	sqlDB, err := pgxpool.Connect(ctx, dbURL)
+	hostname := os.Getenv("HOSTNAME")
+	if hostname == "" {
+		log.Fatalf("HOSTNAME not specified, quitting with error...")
+	}
+
+	grpc_port := os.Getenv("GRPC_PORT")
+	if grpc_port == "" {
+		log.Fatalf("GRPC not specified, quitting with error...")
+	}
+
+	chatServiceAddr := hostname + ":" + grpc_port
+	conn, err := grpc.NewClient(chatServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Main - failed to connect to database: %v", err)
+		log.Fatalf("could not connect to chat service: %v", err)
 	}
-	defer sqlDB.Close()
+	fmt.Printf("gRPC server is running on %s:%s\n", hostname, grpc_port)
 
-	// Instantiate new ChatServer
-	var chatServer = NewChatServer(sqlDB)
-	chatServer.sqlDB = sqlDB
-	if err := chatServer.Run(os.Getenv("HOSTNAME") + os.Getenv("GRPC_PORT")); err != nil {
-		log.Fatalf("Main - failed to serve: %v", err)
+	defer conn.Close()
+
+	// Register gRPC server endpoint
+	// Note: Make sure the gRPC server is running properly and accessible
+	mux := runtime.NewServeMux()
+	if err = pb.RegisterChatServiceHandler(context.Background(), mux, conn); err != nil {
+		log.Fatalf("failed to register the chat server: %v", err)
+	}
+
+	// start listening to requests from the gateway server
+	grpc_gateway_port := os.Getenv("GRPC_GATEWAY_PORT")
+	if grpc_gateway_port == "" {
+		log.Fatalf("GRPC_GATEWAY_PORT not specified, quitting with error...")
+	}
+	grpc_gateway_addr := fmt.Sprintf("%s:%s", hostname, grpc_gateway_port)
+	fmt.Printf("API gateway server is running on %s:%s\n", hostname, grpc_gateway_port)
+	if err = http.ListenAndServe(grpc_gateway_addr, mux); err != nil {
+		log.Fatal("gateway server closed abruptly: ", err)
 	}
 
 }
