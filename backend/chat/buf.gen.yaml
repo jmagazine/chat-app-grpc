@@ -1,0 +1,21 @@
+version: v1
+managed:
+  enabled: true
+plugins:
+  - plugin: go
+    out: ../src/gen/go
+    opt: paths=source_relative
+  - plugin: go-grpc
+    out: ../src/gen/go
+    opt: paths=source_relative
+  - plugin: grpc-gateway
+    out: ../src/gen/go
+    opt: paths=source_relative
+  # Python
+  - plugin: buf.build/protocolbuffers/python
+    out: ../src/gen/python
+  - plugin: buf.build/grpc/python
+    out: ../src/gen/python
+  # JS/TS
+  - plugin: buf.build/bufbuild/es:v2.0.0
+    out: ../src/gen/es

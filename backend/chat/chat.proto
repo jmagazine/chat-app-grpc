@@ -11,12 +11,12 @@ option go_package = "github.com/chat-app-grpc;chat_app_grpc";
 service ChatService{
   rpc CreateUser(CreateUserRequest) returns (CreateUserResponse){
     option (google.api.http) = {
-      post: "/v1/createUser"
+      post: "/v1/CreateUser"
       body: "*"
     };
   }
 
-  rpc DeleteUserByUsername(DeleteUserRequest) returns (DeleteUserResponse){
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse){
     option (google.api.http) = {
       post: "/v1/DeleteUser"
       body: "*"
@@ -32,22 +32,19 @@ service ChatService{
 
   rpc GetAllUsers(GetAllUsersRequest) returns (GetAllUsersResponse){
     option (google.api.http) = {
-      post: "/v1/GetAllUsers"
-      body: "*"
+      get: "/v1/GetAllUsers"
     };
   }
 
 
   rpc GetUser(GetUserRequest) returns (GetUserResponse){
     option (google.api.http) = {
-      post: "/v1/GetUser"
-      body: "*"
+      get: "/v1/GetUser/*"
     };
   }
   rpc GetChatMessages(GetChatMessagesRequest) returns (GetChatMessagesResponse){
     option (google.api.http) = {
-      post: "/v1/GetChatMessages"
-      body: "*"
+      get: "/v1/GetChatMessages/*"
     };
   }
 
@@ -138,7 +135,7 @@ message GetChatMessagesRequest {
   string recipient_id = 2;
 }
 message GetChatMessagesResponse {
-  ChatMessage message = 1;
+  repeated ChatMessage messages = 1;
 }
 
 message SendChatMessageRequest {
@@ -147,7 +144,7 @@ message SendChatMessageRequest {
 
 
 message SendChatMessageResponse {
-  repeated ChatMessage messages = 1;
+  ChatMessage messages = 1;
 }
 
 message DropTableRequest {
