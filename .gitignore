@@ -1,4 +1,4 @@
 *.env*
 .idea
-googleapis
+google/
 *.lock
