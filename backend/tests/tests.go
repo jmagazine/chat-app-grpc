@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -18,25 +19,6 @@ import (
 var client pb.ChatServiceClient
 var CTX context.Context
 var CANCEL context.CancelFunc
-
-// Intialize variables before running tests
-func InitTests() {
-
-	if err := godotenv.Load("../dev.env"); err != nil {
-		log.Fatalf("Error loading dev.env file: %v", err)
-	}
-
-	conn, err := grpc.NewClient(os.Getenv("HOSTNAME")+os.Getenv("GRPC_PORT"), grpc.WithTransportCredentials(insecure.NewCredentials()))
-
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
-
-	client = pb.NewChatServiceClient(conn)
-	CTX, CANCEL = context.WithTimeout(context.Background(), time.Second)
-
-	// Close connection
-}
 
 func TestUserMethods(CTX context.Context, CANCEL context.CancelFunc) error {
 	// Ensure proper database connection
@@ -113,6 +95,35 @@ func AssertClientNotNil() {
 	}
 }
 
+// Intialize variables before running tests
+func InitTests() {
+
+	if err := godotenv.Load("dev.env"); err != nil {
+		log.Fatalf("Error loading dev.env file: %v", err)
+	}
+
+	hostname := os.Getenv("HOSTNAME")
+	if hostname == "" {
+		log.Fatalf("HOSTNAME not specified, quitting with error...")
+	}
+	grpc_port := os.Getenv("GRPC_PORT")
+	if hostname == "" {
+		log.Fatalf("GRPC_PORT not specified, quitting with error...")
+	}
+
+	addr := fmt.Sprintf("%s:%s", hostname, grpc_port)
+
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+
+	client = pb.NewChatServiceClient(conn)
+	CTX, CANCEL = context.WithTimeout(context.Background(), time.Second)
+
+	// Close connection
+}
 func main() {
 	InitTests()
 

@@ -39,7 +39,7 @@ service ChatService{
 
   rpc GetUser(GetUserRequest) returns (GetUserResponse){
     option (google.api.http) = {
-      get: "/v1/GetUser/*"
+      get: "/v1/users/{username}"
     };
   }
   rpc GetChatMessages(GetChatMessagesRequest) returns (GetChatMessagesResponse){

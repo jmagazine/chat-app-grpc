@@ -14,7 +14,10 @@ require (
 	google.golang.org/protobuf v1.34.2
 )
 
-require github.com/pkg/errors v0.8.1 // indirect
+require (
+	github.com/pkg/errors v0.8.1 // indirect
+	github.com/rs/cors v1.11.0 // indirect
+)
 
 require (
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect

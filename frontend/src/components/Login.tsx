@@ -1,18 +1,30 @@
 import "./styles/Login.css";
 import Box from "@mui/icons-material";
 import { TextField } from "@mui/material";
-import { ChatServiceClient } from "../gen/ChatServiceClientPb";
-import { LoginRequest, LoginResponse } from "../gen/chat_pb.d.ts";
+// import { ChatService } from "../../../backend/src/gen/es/chat_pb.js";
 
 // Adjust the path as needed
 // import { CreateUserParams } from "../../../backend/src/chat_server/chat_pb";
 // Import message class
 
-interface Props {
-  client: ChatServiceClient;
-}
+// interface Props {
+//   client: GenService;
+// }
 
-function Home({ client }: Props) {
+function Home() {
+  fetch("http://localhost:8082/v1/users/hello?hash_token=12345a")
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json(); // Assuming the server responds with JSON
+    })
+    .then((data) => {
+      console.log("Data received:", data);
+    })
+    .catch((error) => {
+      console.error("Fetch error:", error);
+    });
   const handleLogin = () => {
     const username = (
       document.getElementById("username-field") as HTMLInputElement
@@ -22,7 +34,7 @@ function Home({ client }: Props) {
     )?.value;
     console.log(username, password);
   };
-  const request = new LoginRequest();
+  // const request = new LoginRequest();
 
   return (
     <div className="login-container">
