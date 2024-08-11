@@ -26,7 +26,7 @@ func TestUserMethods(CTX context.Context, CANCEL context.CancelFunc) error {
 
 	hashToken := utils.HashText(os.Getenv("TEST_USER_1_PASSWORD"))
 
-	user1Response, err := client.CreateUser(CTX, &pb.CreateUserRequest{FullName: os.Getenv("TEST_USER_1_FULLNAME"), Username: os.Getenv("TEST_USER_1_USERNAME"), HashToken: hashToken})
+	user1Response, err := client.CreateUser(CTX, &pb.CreateUserRequest{FirstName: os.Getenv("TEST_USER_1_FIRST_NAME"), LastName: os.Getenv("TEST_USER_1_LAST_NAME"), Username: os.Getenv("TEST_USER_1_USERNAME"), HashToken: hashToken})
 	if err != nil {
 		log.Printf("TestUserMethods - failed to create user: %v", err)
 		return err
@@ -36,7 +36,7 @@ func TestUserMethods(CTX context.Context, CANCEL context.CancelFunc) error {
 	log.Print("Passed: User created successfully.")
 
 	// Ensure attempts to create users with duplicate names fails
-	_, err = client.CreateUser(CTX, &pb.CreateUserRequest{FullName: os.Getenv("TEST_USER_1_FULLNAME"), Username: os.Getenv("TEST_USER_1_USERNAME"), HashToken: hashToken})
+	_, err = client.CreateUser(CTX, &pb.CreateUserRequest{FirstName: os.Getenv("TEST_USER_1_FIRST_NAME"), LastName: os.Getenv("TEST_USER_1_LAST_NAME"), Username: os.Getenv("TEST_USER_1_USERNAME"), HashToken: hashToken})
 
 	if err == nil {
 		return errors.New("duplicate users were allowed")
@@ -53,7 +53,8 @@ func TestUserMethods(CTX context.Context, CANCEL context.CancelFunc) error {
 
 	user2 := user2Response.User
 	// id is handled by the database
-	if user1.FullName != user2.FullName ||
+	if user1.FirstName != user2.FirstName ||
+		user1.LastName != user2.LastName ||
 		user1.Username != user2.Username {
 		log.Printf("User fields did not match.")
 		return err
@@ -61,8 +62,8 @@ func TestUserMethods(CTX context.Context, CANCEL context.CancelFunc) error {
 
 	// Ensure fields are properly updated
 	var updatedFields = make(map[string]string)
-	updatedFields["username"] = "Test User 2 New Username"
-	updatedFields["hash_token"] = utils.HashText("new password")
+	updatedFields["Username"] = "Test User 2 New Username"
+	updatedFields["HashToken"] = utils.HashText("new password")
 	newUserRequest, err := client.UpdateUser(CTX, &pb.UpdateUserRequest{Username: user1.Username, UpdatedFields: updatedFields})
 	if err != nil {
 		log.Printf("TestUserMethods - Failed to update user credentials: %v", err)
@@ -71,7 +72,7 @@ func TestUserMethods(CTX context.Context, CANCEL context.CancelFunc) error {
 	}
 
 	newUser := newUserRequest.User
-	if newUser.Username != updatedFields["username"] {
+	if newUser.Username != updatedFields["Username"] {
 		log.Printf("TestUserMethods - fields are not consistent.")
 		return err
 
