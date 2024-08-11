@@ -19,6 +19,11 @@ class ChatServiceStub(object):
                 request_serializer=chat__pb2.CreateUserRequest.SerializeToString,
                 response_deserializer=chat__pb2.CreateUserResponse.FromString,
                 _registered_method=True)
+        self.GetUser = channel.unary_unary(
+                '/chat.ChatService/GetUser',
+                request_serializer=chat__pb2.GetUserRequest.SerializeToString,
+                response_deserializer=chat__pb2.GetUserResponse.FromString,
+                _registered_method=True)
         self.DeleteUser = channel.unary_unary(
                 '/chat.ChatService/DeleteUser',
                 request_serializer=chat__pb2.DeleteUserRequest.SerializeToString,
@@ -34,11 +39,6 @@ class ChatServiceStub(object):
                 request_serializer=chat__pb2.GetAllUsersRequest.SerializeToString,
                 response_deserializer=chat__pb2.GetAllUsersResponse.FromString,
                 _registered_method=True)
-        self.GetUser = channel.unary_unary(
-                '/chat.ChatService/GetUser',
-                request_serializer=chat__pb2.GetUserRequest.SerializeToString,
-                response_deserializer=chat__pb2.GetUserResponse.FromString,
-                _registered_method=True)
         self.GetChatMessages = channel.unary_unary(
                 '/chat.ChatService/GetChatMessages',
                 request_serializer=chat__pb2.GetChatMessagesRequest.SerializeToString,
@@ -49,22 +49,18 @@ class ChatServiceStub(object):
                 request_serializer=chat__pb2.SendChatMessageRequest.SerializeToString,
                 response_deserializer=chat__pb2.SendChatMessageResponse.FromString,
                 _registered_method=True)
-        self.DeleteAllUsers = channel.unary_unary(
-                '/chat.ChatService/DeleteAllUsers',
-                request_serializer=chat__pb2.DeleteAllUsersRequest.SerializeToString,
-                response_deserializer=chat__pb2.DeleteAllUsersResponse.FromString,
-                _registered_method=True)
-        self.DropTable = channel.unary_unary(
-                '/chat.ChatService/DropTable',
-                request_serializer=chat__pb2.DropTableRequest.SerializeToString,
-                response_deserializer=chat__pb2.DropTableResponse.FromString,
-                _registered_method=True)
 
 
 class ChatServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def CreateUser(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetUser(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -88,12 +84,6 @@ class ChatServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetUser(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def GetChatMessages(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -106,18 +96,6 @@ class ChatServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def DeleteAllUsers(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def DropTable(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
 
 def add_ChatServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -125,6 +103,11 @@ def add_ChatServiceServicer_to_server(servicer, server):
                     servicer.CreateUser,
                     request_deserializer=chat__pb2.CreateUserRequest.FromString,
                     response_serializer=chat__pb2.CreateUserResponse.SerializeToString,
+            ),
+            'GetUser': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetUser,
+                    request_deserializer=chat__pb2.GetUserRequest.FromString,
+                    response_serializer=chat__pb2.GetUserResponse.SerializeToString,
             ),
             'DeleteUser': grpc.unary_unary_rpc_method_handler(
                     servicer.DeleteUser,
@@ -141,11 +124,6 @@ def add_ChatServiceServicer_to_server(servicer, server):
                     request_deserializer=chat__pb2.GetAllUsersRequest.FromString,
                     response_serializer=chat__pb2.GetAllUsersResponse.SerializeToString,
             ),
-            'GetUser': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetUser,
-                    request_deserializer=chat__pb2.GetUserRequest.FromString,
-                    response_serializer=chat__pb2.GetUserResponse.SerializeToString,
-            ),
             'GetChatMessages': grpc.unary_unary_rpc_method_handler(
                     servicer.GetChatMessages,
                     request_deserializer=chat__pb2.GetChatMessagesRequest.FromString,
@@ -155,16 +133,6 @@ def add_ChatServiceServicer_to_server(servicer, server):
                     servicer.SendChatMessage,
                     request_deserializer=chat__pb2.SendChatMessageRequest.FromString,
                     response_serializer=chat__pb2.SendChatMessageResponse.SerializeToString,
-            ),
-            'DeleteAllUsers': grpc.unary_unary_rpc_method_handler(
-                    servicer.DeleteAllUsers,
-                    request_deserializer=chat__pb2.DeleteAllUsersRequest.FromString,
-                    response_serializer=chat__pb2.DeleteAllUsersResponse.SerializeToString,
-            ),
-            'DropTable': grpc.unary_unary_rpc_method_handler(
-                    servicer.DropTable,
-                    request_deserializer=chat__pb2.DropTableRequest.FromString,
-                    response_serializer=chat__pb2.DropTableResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -194,6 +162,33 @@ class ChatService(object):
             '/chat.ChatService/CreateUser',
             chat__pb2.CreateUserRequest.SerializeToString,
             chat__pb2.CreateUserResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetUser(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/chat.ChatService/GetUser',
+            chat__pb2.GetUserRequest.SerializeToString,
+            chat__pb2.GetUserResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -286,33 +281,6 @@ class ChatService(object):
             _registered_method=True)
 
     @staticmethod
-    def GetUser(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/chat.ChatService/GetUser',
-            chat__pb2.GetUserRequest.SerializeToString,
-            chat__pb2.GetUserResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
     def GetChatMessages(request,
             target,
             options=(),
@@ -356,60 +324,6 @@ class ChatService(object):
             '/chat.ChatService/SendChatMessage',
             chat__pb2.SendChatMessageRequest.SerializeToString,
             chat__pb2.SendChatMessageResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def DeleteAllUsers(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/chat.ChatService/DeleteAllUsers',
-            chat__pb2.DeleteAllUsersRequest.SerializeToString,
-            chat__pb2.DeleteAllUsersResponse.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
-
-    @staticmethod
-    def DropTable(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/chat.ChatService/DropTable',
-            chat__pb2.DropTableRequest.SerializeToString,
-            chat__pb2.DropTableResponse.FromString,
             options,
             channel_credentials,
             insecure,

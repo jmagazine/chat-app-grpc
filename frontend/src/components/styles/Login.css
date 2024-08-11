@@ -2,25 +2,24 @@
   --border-radius: 15px; /* Define your border radius here */
 }
 .title-subtitle {
-  text-align: center; /* Center text horizontally */
   margin-bottom: 20px; /* Space between title and forms */
 }
 
-.login-container {
+#login-container {
   display: flex;
   flex-direction: column;
   align-items: center; /* Center content horizontally */
   background-color: gray;
   padding: 10%;
   border-radius: var(--border-radius);
-  max-width: 700px; /* Adjust as needed */
-  max-height: 700px; /* Adjust to match max-width */
-  width: 500px; /* Allows the container to shrink */
-  height: 500px; /* Allows the container to shrink */
-  aspect-ratio: 1; /* This keeps the width and height equal, making it a square */
+  max-width: 700px;
+  max-height: 1100px;
+  width: 500px;
+  height: 700px;
+  aspect-ratio: 1;
 }
 
-.forms {
+#forms {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -29,13 +28,13 @@
   border-radius: var(--border-radius);
 }
 
-.form-field {
+#form-field {
   margin-bottom: 100%;
   height: 50px;
   border-radius: var(--border-radius);
 }
 
-.login-button {
+#submit-button {
   display: flex;
   justify-content: center; /* Center content horizontally */
   align-items: center; /* Center content vertically */
@@ -48,7 +47,7 @@
   cursor: pointer; /* Change cursor to pointer on hover */
 }
 
-.signup-button {
+#switch-view-button {
   color: rgb(22, 22, 161);
   cursor: pointer;
   margin-top: 5px;

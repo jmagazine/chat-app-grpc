@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"net"
@@ -17,7 +18,9 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 )
 
 type ChatServer struct {
@@ -29,20 +32,18 @@ func NewChatServer(sqlDB *pgxpool.Pool) ChatServer {
 	return ChatServer{sqlDB: sqlDB}
 }
 
-// USER FUNCTIONS
-
-// CreateUser defines the protocol to create a new user
-func (server ChatServer) CreateUser(ctx context.Context, in *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
-	log.Printf("CreateUser - Received: %v", in.GetFullName())
+// Create the database and users table if they don't exist
+func (server ChatServer) RunSQLSetupCommands(ctx context.Context) error {
 	createUsersDb := `
-CREATE DATABASE chat-app-grpc);`
+CREATE DATABASE IF NOT EXISTS chat-app-grpc;`
 
 	createUsersTbl := `
 CREATE TABLE IF NOT EXISTS users (
     Id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    fullname VARCHAR(255) NOT NULL,
-    username VARCHAR(255) NOT NULL UNIQUE,
-    hash_token VARCHAR(65535) NOT NULL
+    FirstName VARCHAR(255) NOT NULL,
+    LastName VARCHAR(255) NOT NULL,
+    Username VARCHAR(255) NOT NULL UNIQUE,
+    HashToken VARCHAR(65535) NOT NULL
 );`
 
 	createUUIDExtension := `CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -58,7 +59,7 @@ CREATE TABLE IF NOT EXISTS users (
 		} else {
 			// Other errors
 			fmt.Printf("CreateUser - Failed to create user db: %v/n", err)
-			return nil, err
+			return err
 		}
 	}
 
@@ -72,23 +73,52 @@ CREATE TABLE IF NOT EXISTS users (
 	_, err = server.sqlDB.Exec(ctx, createUsersTbl)
 	if err != nil {
 		fmt.Printf("CreateUser - Failed to create user table: %v/n", err)
-		return nil, err
+		return err
 	}
 
-	var newUser = &pb.User{FullName: in.GetFullName(), Username: in.GetUsername()}
+	return nil
+}
+
+// Returns true if the specified value for the specified column in the specified table exists, false otherwise.
+func exists(sqlDB *pgxpool.Pool, table string, column string, value string) bool {
+	var exists bool
+	query := fmt.Sprintf(`SELECT EXISTS(SELECT 1 FROM %s WHERE %s = $1)`, table, column)
+	err := sqlDB.QueryRow(context.Background(), query, value).Scan(&exists)
+	if err != nil {
+		log.Println("Error checking username existence:", err)
+		return false
+	}
+
+	return exists
+}
+
+// CreateUser defines the protocol to create a new user
+func (server ChatServer) CreateUser(ctx context.Context, in *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+	fmt.Printf("Received: %s, %s, %s, %s", in.GetFirstName(), in.GetLastName(), in.GetUsername(), in.GetHashToken())
+
+	err := server.RunSQLSetupCommands(ctx)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Internal server error.")
+
+	}
+	var newUser = &pb.User{FirstName: in.GetFirstName(), LastName: in.GetLastName(), Username: in.GetUsername()}
 
 	tx, err := server.sqlDB.Begin(ctx)
 	if err != nil {
 		log.Fatalf("CreateUser - conn.Begin failed: %v", err)
-		return nil, err
+		return nil, status.Error(codes.Internal, "Internal server error.")
 	}
+	defer tx.Rollback(ctx)
+
+	if exists(server.sqlDB, "users", "Username", in.GetUsername()) {
+		return nil, status.Error(codes.AlreadyExists, "That username is already taken.")
+	}
+
 	// update database
 	_, err = tx.Exec(ctx,
-		"insert into users(fullname, username, hash_token) values ($1, $2, $3)",
-		newUser.FullName, newUser.Username, in.HashToken)
+		"insert into users(FirstName, LastName, Username, HashToken) values ($1, $2, $3, $4)",
+		newUser.FirstName, newUser.LastName, newUser.Username, in.HashToken)
 	if err != nil {
-		tx.Rollback(ctx)
-		log.Printf("CreateUser - tx.Exec failed: %v", err)
 		return nil, err
 	}
 
@@ -97,46 +127,53 @@ CREATE TABLE IF NOT EXISTS users (
 	return &pb.CreateUserResponse{User: newUser}, nil
 }
 
-func (server ChatServer) DeleteAllUsers(ctx context.Context, in *pb.DeleteAllUsersRequest) (*pb.DeleteAllUsersResponse, error) {
+func (server ChatServer) DeleteAllUsers() error {
 	log.Printf("deleting all users")
+	ctx := context.Background()
 	query := "DELETE FROM users"
 	tx, err := server.sqlDB.Begin(ctx)
 	if err != nil {
 		log.Printf("DeleteAllUsers - failed to begin transaction: %v", err)
-		return &pb.DeleteAllUsersResponse{}, err
+		return err
 	}
 
 	_, err = tx.Exec(ctx, query)
 	if err != nil {
 		tx.Rollback(ctx)
 		log.Printf("DeleteAllUsers - failed to execute delete command.")
-		return &pb.DeleteAllUsersResponse{}, err
+		return err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
 		tx.Rollback(ctx)
 		log.Printf("DeleteAllUsers - failed to execute delete command.")
-		return &pb.DeleteAllUsersResponse{}, err
+		return err
 	}
 	log.Printf("deleted all users")
-	return &pb.DeleteAllUsersResponse{}, nil
+	return nil
 
 }
 
 func (server ChatServer) GetUser(ctx context.Context, in *pb.GetUserRequest) (*pb.GetUserResponse, error) {
 
-	loginQuery := "SELECT id, fullname, username FROM users WHERE username = $1 AND hash_token = $2"
+	loginQuery := "SELECT Id, FirstName, LastName, Username FROM users WHERE Username = $1 AND HashToken = $2"
 	userRows, err := server.sqlDB.Query(ctx, loginQuery, in.GetUsername(), in.GetHashToken())
+	// if querying the database fails, return error code 500
 	if err != nil {
-		log.Printf("GetUser - failed to find user with specified credentials, %v", err)
+		if err == sql.ErrNoRows {
+			return nil, status.Error(codes.NotFound, "User Not Found")
+		}
+		return nil, status.Error(codes.Internal, "Internal server error.")
 	}
 
 	defer userRows.Close()
 	user := &pb.User{}
-	for userRows.Next() {
-		if err := userRows.Scan(&user.Id, &user.FullName, &user.Username); err != nil {
+	if !userRows.Next() {
+		return nil, status.Error(codes.NotFound, "User Not Found")
+	} else {
+		if err := userRows.Scan(&user.Id, &user.FirstName, &user.Username); err != nil {
 			log.Printf("GetUser - failed to find user in db: %v/n", err)
-			return nil, err
+
 		}
 	}
 	return &pb.GetUserResponse{User: user}, nil
@@ -146,14 +183,14 @@ func (server ChatServer) GetUser(ctx context.Context, in *pb.GetUserRequest) (*p
 func (server ChatServer) DeleteUser(ctx context.Context, in *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
 	user := &pb.User{}
 	fmt.Print(in.Username)
-	userRows, err := server.sqlDB.Query(ctx, "SELECT id, fullname, username FROM users WHERE username = $1", in.GetUsername())
+	userRows, err := server.sqlDB.Query(ctx, "SELECT Id, FirstName, LastName, Username FROM users WHERE username = $1", in.GetUsername())
 	if err != nil {
 		return nil, err
 	}
 	// Check if the query returned a row
 	if userRows.Next() {
 		// Scan the row into the user struct
-		if err := userRows.Scan(&user.Id, &user.FullName, &user.Username); err != nil {
+		if err := userRows.Scan(&user.Id, &user.FirstName, user.LastName, &user.Username); err != nil {
 			log.Printf("DeleteUser - failed to scan user row: %v/n", err)
 			return nil, err
 		}
@@ -162,7 +199,7 @@ func (server ChatServer) DeleteUser(ctx context.Context, in *pb.DeleteUserReques
 		return nil, fmt.Errorf("user not found")
 	}
 
-	_, err = server.sqlDB.Exec(ctx, "DELETE FROM users WHERE username = $1", in.Username)
+	_, err = server.sqlDB.Exec(ctx, "DELETE FROM users WHERE Username = $1", in.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -175,6 +212,24 @@ func (server ChatServer) DeleteUser(ctx context.Context, in *pb.DeleteUserReques
 func (server ChatServer) UpdateUser(ctx context.Context, in *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
 	var builder strings.Builder
 	builder.WriteString("UPDATE users SET ")
+	allowedKeys := map[string]bool{
+		"Id":        true,
+		"Username":  true,
+		"FirstName": true,
+		"LastName":  true,
+	}
+
+	updatedFields := in.GetUpdatedFields()
+	if len(in.GetUpdatedFields()) > 4 {
+		return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Too many fields: expected 4, got %d.", len(in.GetUpdatedFields())))
+	}
+
+	for key := range updatedFields {
+		if !allowedKeys[key] {
+			return nil, status.Error(codes.InvalidArgument, fmt.Sprintf("Key '%s' not allowed", key))
+		}
+	}
+
 	values := make([]interface{}, 0, len(in.GetUpdatedFields())+1)
 	i := 1
 	for k, v := range in.GetUpdatedFields() {
@@ -185,7 +240,7 @@ func (server ChatServer) UpdateUser(ctx context.Context, in *pb.UpdateUserReques
 
 	command := builder.String()
 	command = command[:len(command)-2]
-	command += fmt.Sprintf(" WHERE username = $%d", i)
+	command += fmt.Sprintf(" WHERE Username = $%d", i)
 	values = append(values, in.Username)
 	tx, err := server.sqlDB.Begin(ctx)
 	if err != nil {
@@ -202,11 +257,10 @@ func (server ChatServer) UpdateUser(ctx context.Context, in *pb.UpdateUserReques
 	}
 	tx.Commit(ctx)
 	// Get updated user
-	row := server.sqlDB.QueryRow(ctx, "SELECT id, fullname, username FROM users WHERE username = $1", in.UpdatedFields["username"])
+	row := server.sqlDB.QueryRow(ctx, "SELECT Id, FirstName,  LastName, Username FROM users WHERE Username = $1", in.UpdatedFields["Username"])
 	updatedUser := &pb.User{}
-	if err := row.Scan(&updatedUser.Id, &updatedUser.FullName, &updatedUser.Username); err != nil {
+	if err := row.Scan(&updatedUser.Id, &updatedUser.FirstName, &updatedUser.Username); err != nil {
 		log.Printf("UpdateUser - failed to find updated user: %v/n", err)
-
 		return nil, err
 	}
 	return &pb.UpdateUserResponse{User: updatedUser}, nil
@@ -215,7 +269,7 @@ func (server ChatServer) UpdateUser(ctx context.Context, in *pb.UpdateUserReques
 // GetAllUsers returns a list of all registered users.
 func (server ChatServer) GetAllUsers(ctx context.Context, in *pb.GetAllUsersRequest) (*pb.GetAllUsersResponse, error) {
 	var userSlice []*pb.User
-	userRows, err := server.sqlDB.Query(ctx, "select id, fullname, username from users")
+	userRows, err := server.sqlDB.Query(ctx, "select id, FirstName, Username from users")
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +277,7 @@ func (server ChatServer) GetAllUsers(ctx context.Context, in *pb.GetAllUsersRequ
 	defer userRows.Close()
 	for userRows.Next() {
 		user := pb.User{}
-		err = userRows.Scan(&user.Id, &user.FullName, &user.Username)
+		err = userRows.Scan(&user.Id, &user.FirstName, &user.Username)
 		if err != nil {
 			return nil, err
 		}
@@ -260,7 +314,7 @@ func (server ChatServer) SendChatMessage(ctx context.Context, in *pb.SendChatMes
 	newChatMessage := in.Message
 	_, err = tx.Exec(ctx,
 		"insert into chat_messages(timestamp, sender, recipient, text) values ($1, $2, $3, $4)",
-		newChatMessage.Timestamp, newChatMessage.Sender, newChatMessage.Recipient, newChatMessage.Text)
+		newChatMessage.Timestamp, newChatMessage.SenderId, newChatMessage.RecipientId, newChatMessage.Text)
 	if err != nil {
 		tx.Rollback(ctx)
 		log.Printf("SendChatMessage - tx.Exec failed: %v", err)
@@ -291,7 +345,7 @@ func (server ChatServer) GetChatMessages(ctx context.Context, in *pb.GetChatMess
 
 	for userRows.Next() {
 		message := pb.ChatMessage{}
-		err = userRows.Scan(&message.Timestamp, &message.Sender, &message.Recipient, &message.Text)
+		err = userRows.Scan(&message.Timestamp, &message.SenderId, &message.RecipientId, &message.Text)
 		if err != nil {
 			return nil, err
 		}
@@ -341,8 +395,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Main - failed to connect to database: %v", err)
 	}
-	// defer conn.Close()
-	// defer sqlDB.Close()
+	defer conn.Close()
+	defer sqlDB.Close()
 
 	// Instantiate new ChatServer
 	chatServer := NewChatServer(sqlDB)
@@ -359,16 +413,15 @@ func main() {
 		}
 	}()
 
-	// Set up CORS options
+	// Set up CORS options (allow frontend to make calls to api)
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"}, // Allow all origins, or specify your frontend URL
+		AllowedOrigins:   []string{"*"}, // Allow all origins for now, fix later
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
 	})
 
 	// Register gRPC server endpoint
-	// Note: Make sure the gRPC server is running properly and accessible
 	mux := runtime.NewServeMux()
 	if err = pb.RegisterChatServiceHandler(context.Background(), mux, conn); err != nil {
 		log.Fatalf("failed to register the chat server: %v", err)

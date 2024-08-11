@@ -21,12 +21,17 @@ export declare type User = Message<"chat.User"> & {
   id: string;
 
   /**
-   * @generated from field: string full_name = 2;
+   * @generated from field: string first_name = 2;
    */
-  fullName: string;
+  firstName: string;
 
   /**
-   * @generated from field: string username = 3;
+   * @generated from field: string last_name = 3;
+   */
+  lastName: string;
+
+  /**
+   * @generated from field: string username = 4;
    */
   username: string;
 };
@@ -42,17 +47,22 @@ export declare const UserSchema: GenMessage<User>;
  */
 export declare type CreateUserRequest = Message<"chat.CreateUserRequest"> & {
   /**
-   * @generated from field: string full_name = 1;
+   * @generated from field: string first_name = 1;
    */
-  fullName: string;
+  firstName: string;
 
   /**
-   * @generated from field: string username = 2;
+   * @generated from field: string last_name = 2;
+   */
+  lastName: string;
+
+  /**
+   * @generated from field: string username = 3;
    */
   username: string;
 
   /**
-   * @generated from field: string hash_token = 3;
+   * @generated from field: string hash_token = 4;
    */
   hashToken: string;
 };
@@ -137,7 +147,7 @@ export declare const GetUserRequestSchema: GenMessage<GetUserRequest>;
  */
 export declare type GetUserResponse = Message<"chat.GetUserResponse"> & {
   /**
-   * @generated from field: chat.User user = 1;
+   * @generated from field: chat.User user = 3;
    */
   user?: User;
 };
@@ -223,14 +233,14 @@ export declare type ChatMessage = Message<"chat.ChatMessage"> & {
   timestamp?: Timestamp;
 
   /**
-   * @generated from field: string sender = 2;
+   * @generated from field: string sender_id = 2;
    */
-  sender: string;
+  senderId: string;
 
   /**
-   * @generated from field: string recipient = 3;
+   * @generated from field: string recipient_id = 3;
    */
-  recipient: string;
+  recipientId: string;
 
   /**
    * @generated from field: string text = 4;
@@ -378,6 +388,14 @@ export declare const ChatService: GenService<{
     output: typeof CreateUserResponseSchema;
   },
   /**
+   * @generated from rpc chat.ChatService.GetUser
+   */
+  getUser: {
+    methodKind: "unary";
+    input: typeof GetUserRequestSchema;
+    output: typeof GetUserResponseSchema;
+  },
+  /**
    * @generated from rpc chat.ChatService.DeleteUser
    */
   deleteUser: {
@@ -402,14 +420,6 @@ export declare const ChatService: GenService<{
     output: typeof GetAllUsersResponseSchema;
   },
   /**
-   * @generated from rpc chat.ChatService.GetUser
-   */
-  getUser: {
-    methodKind: "unary";
-    input: typeof GetUserRequestSchema;
-    output: typeof GetUserResponseSchema;
-  },
-  /**
    * @generated from rpc chat.ChatService.GetChatMessages
    */
   getChatMessages: {
@@ -424,22 +434,6 @@ export declare const ChatService: GenService<{
     methodKind: "unary";
     input: typeof SendChatMessageRequestSchema;
     output: typeof SendChatMessageResponseSchema;
-  },
-  /**
-   * @generated from rpc chat.ChatService.DeleteAllUsers
-   */
-  deleteAllUsers: {
-    methodKind: "unary";
-    input: typeof DeleteAllUsersRequestSchema;
-    output: typeof DeleteAllUsersResponseSchema;
-  },
-  /**
-   * @generated from rpc chat.ChatService.DropTable
-   */
-  dropTable: {
-    methodKind: "unary";
-    input: typeof DropTableRequestSchema;
-    output: typeof DropTableResponseSchema;
   },
 }>;
 

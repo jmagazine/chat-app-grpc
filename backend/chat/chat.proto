@@ -16,6 +16,13 @@ service ChatService{
     };
   }
 
+  rpc GetUser(GetUserRequest) returns (GetUserResponse){
+    option (google.api.http) = {
+      post: "/v1/GetUser"
+      body: "*"
+    };
+  }
+  
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse){
     option (google.api.http) = {
       post: "/v1/DeleteUser"
@@ -37,11 +44,6 @@ service ChatService{
   }
 
 
-  rpc GetUser(GetUserRequest) returns (GetUserResponse){
-    option (google.api.http) = {
-      get: "/v1/users/{username}"
-    };
-  }
   rpc GetChatMessages(GetChatMessagesRequest) returns (GetChatMessagesResponse){
     option (google.api.http) = {
       get: "/v1/GetChatMessages/*"
@@ -55,34 +57,22 @@ service ChatService{
     };
   }
 
-  rpc DeleteAllUsers(DeleteAllUsersRequest) returns (DeleteAllUsersResponse){
-    option (google.api.http) = {
-      post: "/v1/DeleteAllUsers"
-      body: "*"
-    };
-  }
-
-  rpc DropTable(DropTableRequest) returns (DropTableResponse){
-    option (google.api.http) = {
-      post: "/v1/DropTable"
-      body: "*"
-    };
-  }
-
 
 }
 
 
 message User {
   string id=1;
-  string full_name=2;
-  string username=3;
+  string first_name=2;
+  string last_name=3;
+  string username=4;
 }
 
 message CreateUserRequest {
-  string full_name=1;
-  string username=2;
-  string hash_token=3;
+  string first_name=1;
+  string last_name=2;
+  string username=3;
+  string hash_token=4;
 }
 
 message CreateUserResponse {
@@ -102,7 +92,7 @@ message GetUserRequest{
   string hash_token = 2;
 }
 message GetUserResponse{
-  User user = 1;
+  User user = 3;
 }
 
 
@@ -125,8 +115,8 @@ message GetAllUsersResponse{
 
 message ChatMessage {
   google.protobuf.Timestamp timestamp = 1;
-  string sender = 2;
-  string recipient = 3;
+  string sender_id = 2;
+  string recipient_id = 3;
   string text = 4;
 }
 
