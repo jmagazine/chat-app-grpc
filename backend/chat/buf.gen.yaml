@@ -18,4 +18,4 @@ plugins:
     out: ../src/gen/python
   # JS/TS
   - plugin: buf.build/bufbuild/es:v2.0.0
-    out: ../src/gen/es
+    out: ../../frontend/src/gen/es

@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -363,17 +364,18 @@ func (server ChatServer) DropTable(ctx context.Context, in *pb.DropTableRequest)
 }
 
 func main() {
-	// Load .env
-	if err := godotenv.Load("../dev.env"); err != nil {
+	// File path to dev.env
+	envPath := filepath.Join("backend", "dev.env")
+	if err := godotenv.Load(envPath); err != nil {
 		log.Fatalf("Error loading dev.env file: %v", err)
 	}
+
 	var dbURL = os.Getenv("DB_URL")
 	if dbURL == "" {
 		log.Fatalf("DB_URL not specified, quitting with error...")
 	}
 
 	// Set up a connection to the chat server.
-
 	hostname := os.Getenv("HOSTNAME")
 	if hostname == "" {
 		log.Fatalf("HOSTNAME not specified, quitting with error...")

@@ -1,0 +1,10 @@
+services:
+  web:
+    build: .
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /code
+  redis:
+    image: "postgres"

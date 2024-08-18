@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/jmagazine/chat-app-grpc/src/utils"
@@ -98,8 +99,9 @@ func AssertClientNotNil() {
 
 // Intialize variables before running tests
 func InitTests() {
-
-	if err := godotenv.Load("dev.env"); err != nil {
+	// File path to dev.env
+	envPath := filepath.Join("backend", "dev.env")
+	if err := godotenv.Load(envPath); err != nil {
 		log.Fatalf("Error loading dev.env file: %v", err)
 	}
 

@@ -110,7 +110,14 @@ function Login() {
         },
       }).then((res) => {
         if (!res.ok) {
-          setErrorMessage(`Error: ${res.text()}`);
+          console.log(res);
+          if (res.status === 400) {
+            setErrorMessage(
+              `Your username or password is incorrect, please try again.`
+            );
+          } else if (res.status === 500) {
+            setErrorMessage("Something went wrong, please try again later.");
+          }
         } else {
           res.json().then((json) => {
             console.log(json);

@@ -1,0 +1,26 @@
+.conversation-container {
+  display: flex;
+  flex-direction: column;
+  border-color: blue;
+  cursor: pointer;
+  padding: 5%;
+}
+
+.conversation-container:hover {
+  background-color: rgb(66, 66, 66);
+}
+
+.contacts-and-date-container {
+  text-align: center;
+  display: flex;
+  width: 30;
+  max-width: 30vw;
+  justify-content: space-between;
+  overflow-y: auto;
+}
+
+.contacts-and-date-container h2 {
+  align-self: flex-start;
+  margin: 0;
+  padding: 0;
+}

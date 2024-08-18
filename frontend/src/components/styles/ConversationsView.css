@@ -1,0 +1,38 @@
+.conversations-view-main-container {
+  display: flex;
+}
+
+.contacts-container {
+  min-width: 33vw;
+  background-color: rgb(88, 85, 85);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.contacts-container h2 {
+  text-align: center;
+}
+
+.conversation-container {
+  display: flex;
+  flex: column;
+  max-height: 20%;
+}
+.contact-and-date-container {
+  display: flex;
+  min-width: 100%;
+  justify-content: space-between;
+}
+
+.conversations-container {
+  min-width: 67vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.scrollable-conversations-view {
+}
