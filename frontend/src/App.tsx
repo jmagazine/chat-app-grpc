@@ -3,12 +3,12 @@
 // import viteLogo from '/vite.svg'
 import "./App.css";
 // import Login from "./components/Login.tsx";
-import ConversationsView from "./components/ConversationsView.tsx";
+import HomeView from "./components/HomeView.tsx";
 
 function App() {
   return (
     <div className="app-container">
-      <ConversationsView />
+      <HomeView />
     </div>
   );
   // const [count, setCount] = useState(0)

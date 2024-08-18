@@ -15,10 +15,11 @@
   text-align: center;
 }
 
-.conversation-container {
+.conversations-container {
   display: flex;
   flex: column;
   max-height: 20%;
+  text-align: center;
 }
 .contact-and-date-container {
   display: flex;
